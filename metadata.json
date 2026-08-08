@@ -1,0 +1,6 @@
+{
+  "name": "MBA Academy",
+  "description": "All-in-One Tuition Academy Management System with Supabase backend and student portals",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
