@@ -47,6 +47,16 @@ export default function App() {
   const [tQual, setTQual] = useState('');
   const [tImg, setTImg] = useState('');
 
+  // Class Media / Video / Audio / Image state & handlers
+  const [classMedia, setClassMedia] = useState<any[]>([]);
+  const [mediaTitle, setMediaTitle] = useState('');
+  const [mediaClass, setMediaClass] = useState('Class 1');
+  const [mediaType, setMediaType] = useState<'video' | 'audio' | 'image'>('video');
+  const [mediaFileUrl, setMediaFileUrl] = useState('');
+  const [mediaTeacher, setMediaTeacher] = useState('');
+  const [mediaClassFilter, setMediaClassFilter] = useState('all');
+  const [mediaTypeFilter, setMediaTypeFilter] = useState('all');
+
   // Admin add online class form
   const [onlineTitle, setOnlineTitle] = useState('');
   const [onlineTeacher, setOnlineTeacher] = useState('');
@@ -72,8 +82,71 @@ export default function App() {
   useEffect(() => {
     fetchTeachers();
     fetchOnlineClasses();
+    fetchClassMedia();
     loadLocalData();
   }, []);
+
+  const fetchClassMedia = async () => {
+    try {
+      const { data, error } = await supabase.from('class_media').select('*');
+      if (error || !data || data.length === 0) {
+        const local = localStorage.getItem('tuition_class_media_v1');
+        if (local) setClassMedia(JSON.parse(local));
+        else setClassMedia([]);
+      } else {
+        setClassMedia(data);
+      }
+    } catch {
+      const local = localStorage.getItem('tuition_class_media_v1');
+      if (local) setClassMedia(JSON.parse(local));
+      else setClassMedia([]);
+    }
+  };
+
+  const handleAddMedia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mediaTitle || !mediaFileUrl) return alert('Please provide title and upload media file.');
+    const newItem = {
+      id: Date.now(),
+      title: mediaTitle,
+      className: mediaClass,
+      mediaType,
+      fileUrl: mediaFileUrl,
+      teacherName: mediaTeacher || 'Academy Faculty',
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const { data, error } = await supabase.from('class_media').insert([newItem]).select();
+      if (error) {
+        const updated = [newItem, ...classMedia];
+        setClassMedia(updated);
+        localStorage.setItem('tuition_class_media_v1', JSON.stringify(updated));
+      } else if (data) {
+        setClassMedia([data[0], ...classMedia]);
+      }
+    } catch {
+      const updated = [newItem, ...classMedia];
+      setClassMedia(updated);
+      localStorage.setItem('tuition_class_media_v1', JSON.stringify(updated));
+    }
+
+    setMediaTitle(''); setMediaFileUrl(''); setMediaTeacher('');
+    alert('Class media uploaded & published successfully!');
+  };
+
+  const handleDeleteMedia = async (id: number) => {
+    if (confirm('Delete this media item?')) {
+      try {
+        await supabase.from('class_media').delete().eq('id', id);
+      } catch (err) {
+        console.error(err);
+      }
+      const filtered = classMedia.filter(m => m.id !== id);
+      setClassMedia(filtered);
+      localStorage.setItem('tuition_class_media_v1', JSON.stringify(filtered));
+    }
+  };
 
   const fetchTeachers = async () => {
     try {
@@ -82,22 +155,15 @@ export default function App() {
         // fallback to localStorage if table doesn't exist yet
         const local = localStorage.getItem('ta_teachers');
         if (local) setTeachers(JSON.parse(local));
-        else {
-          const defaultTeachers = [
-            { id: 1, name: 'Sir Ahmed Raza', subject: 'Mathematics', qual: 'M.Sc Math, 8+ Years Exp', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80' },
-            { id: 2, name: 'Ms. Ayesha Khan', subject: 'English Literature', qual: 'M.A English, 6+ Years Exp', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&q=80' },
-            { id: 3, name: 'Sir Tariq Mahmood', subject: 'Physics & Chemistry', qual: 'B.Sc Engineering, 10+ Years Exp', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=80' }
-          ];
-          setTeachers(defaultTeachers);
-        }
+        else setTeachers([]);
       } else {
-        setTeachers(data && data.length > 0 ? data : [
-          { id: 1, name: 'Sir Ahmed Raza', subject: 'Mathematics', qual: 'M.Sc Math, 8+ Years Exp', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80' },
-          { id: 2, name: 'Ms. Ayesha Khan', subject: 'English Literature', qual: 'M.A English, 6+ Years Exp', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&q=80' }
-        ]);
+        setTeachers(data && data.length > 0 ? data : []);
       }
     } catch (err) {
       console.error(err);
+      const local = localStorage.getItem('ta_teachers');
+      if (local) setTeachers(JSON.parse(local));
+      else setTeachers([]);
     }
   };
 
@@ -107,17 +173,15 @@ export default function App() {
       if (error || !data || data.length === 0) {
         const local = localStorage.getItem('tuition_online_classes_v1');
         if (local) setOnlineClasses(JSON.parse(local));
-        else {
-          setOnlineClasses([
-            { id: 1, title: 'Class 9th Mathematics - Algebra', teacher: 'Sir Ahmed Raza', time: 'Daily 4:00 PM', link: 'https://zoom.us' },
-            { id: 2, title: 'Class 10th Physics - Mechanics', teacher: 'Sir Tariq Mahmood', time: 'Daily 5:30 PM', link: 'https://zoom.us' }
-          ]);
-        }
+        else setOnlineClasses([]);
       } else {
         setOnlineClasses(data);
       }
     } catch (err) {
       console.error(err);
+      const local = localStorage.getItem('tuition_online_classes_v1');
+      if (local) setOnlineClasses(JSON.parse(local));
+      else setOnlineClasses([]);
     }
   };
 
@@ -129,14 +193,7 @@ export default function App() {
     if (savedAtt) {
       setAttendanceStudents(JSON.parse(savedAtt));
     } else {
-      // Default initial students
-      const defaultSt = [
-        { id: 101, cls: 'Class 9', name: 'Ali Khan', roll: '901', status: 'Present' },
-        { id: 102, cls: 'Class 9', name: 'Fatima Noor', roll: '902', status: 'Present' },
-        { id: 103, cls: 'Class 10', name: 'Usman Malik', roll: '1001', status: 'Present' }
-      ];
-      setAttendanceStudents(defaultSt);
-      localStorage.setItem('tuition_attendance_students_v1', JSON.stringify(defaultSt));
+      setAttendanceStudents([]);
     }
   };
 
@@ -338,13 +395,16 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-600 selection:text-white">
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-3.5 flex justify-between items-center shadow-xs">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentPage('home')}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center font-bold text-xl shadow-md">
+        <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentPage('home')}>
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-900 via-blue-700 to-indigo-600 text-white flex items-center justify-center font-extrabold text-2xl shadow-lg ring-2 ring-blue-500/20 group-hover:scale-105 transition-transform">
             🎓
           </div>
           <div>
-            <span className="font-bold text-xl text-blue-900 tracking-tight">MBA</span>
-            <span className="font-bold text-xl text-blue-600 tracking-tight ml-1">Academy</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-xl text-blue-950 tracking-tight">MBA</span>
+              <span className="font-extrabold text-xl text-blue-600 tracking-tight">Academy</span>
+            </div>
+            <p className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase">Excellence in Education</p>
           </div>
         </div>
 
@@ -357,6 +417,7 @@ export default function App() {
           <li><button onClick={() => setCurrentPage('ramadan')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'ramadan' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>🌙 Rozay</button></li>
           <li><button onClick={() => setCurrentPage('admission')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'admission' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Admission</button></li>
           <li><button onClick={() => setCurrentPage('online')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'online' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Online Classes</button></li>
+          <li><button onClick={() => setCurrentPage('media')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'media' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>🎬 Class Media</button></li>
           <li><button onClick={() => setCurrentPage('results')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'results' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Results</button></li>
           <li><button onClick={() => setCurrentPage('gallery')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
           <li><button onClick={() => setCurrentPage('contact')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
@@ -379,9 +440,9 @@ export default function App() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-2 shadow-lg">
-          {['home', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'results', 'gallery', 'contact', 'records'].map(p => (
+          {['home', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'media', 'results', 'gallery', 'contact', 'records'].map(p => (
             <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-              {p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p}
+              {p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p === 'media' ? '🎬 Class Media & Videos' : p}
             </button>
           ))}
         </div>
@@ -492,7 +553,22 @@ export default function App() {
                 <input type="text" placeholder="Subject *" value={tSubject} onChange={e => setTSubject(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
                 <input type="text" placeholder="Qualification & Exp *" value={tQual} onChange={e => setTQual(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
               </div>
-              <input type="text" placeholder="Photo Image URL (Optional)" value={tImg} onChange={e => setTImg(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none w-full mb-3" />
+              <div className="flex items-center gap-3 mb-3 bg-white p-3 rounded-xl border border-amber-200">
+                <div className="w-12 h-12 rounded-lg bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-500">
+                  {tImg ? <img src={tImg} alt="" className="w-full h-full object-cover" /> : '👤'}
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Teacher Photo Upload</label>
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = () => setTImg(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }
+                  }} className="text-xs text-slate-500" />
+                </div>
+              </div>
               <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-sm">Add Teacher</button>
             </form>
           )}
@@ -821,6 +897,137 @@ export default function App() {
                 </a>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* PAGE: CLASS MEDIA & VIDEOS */}
+      {currentPage === 'media' && (
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+            <div>
+              <span className="bg-blue-50 text-blue-600 px-3.5 py-1.5 rounded-full text-xs font-semibold inline-block mb-2">Video & Audio Lectures</span>
+              <h1 className="text-3xl font-bold text-slate-900">Class Video, Audio & Media Hub</h1>
+            </div>
+          </div>
+
+          {isAdmin && (
+            <form onSubmit={handleAddMedia} className="bg-amber-50 border border-amber-200 p-6 rounded-2xl mb-8 shadow-sm">
+              <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2"><Plus size={18} /> Upload Class Video, Audio or Image (Admin)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <input type="text" placeholder="Lecture Title *" value={mediaTitle} onChange={e => setMediaTitle(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                <select value={mediaClass} onChange={e => setMediaClass(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
+                  ))}
+                </select>
+                <select value={mediaType} onChange={e => setMediaType(e.target.value as any)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none">
+                  <option value="video">Video Lecture (MP4/WebM)</option>
+                  <option value="audio">Audio Lecture (MP3/WAV)</option>
+                  <option value="image">Image / Notes Diagram</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <input type="text" placeholder="Teacher Name (optional)" value={mediaTeacher} onChange={e => setMediaTeacher(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" />
+                <div className="bg-white p-3 rounded-xl border border-amber-200 flex items-center gap-3">
+                  <label className="text-xs font-bold text-slate-700 whitespace-nowrap">Upload File *</label>
+                  <input type="file" accept="video/*,audio/*,image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = () => setMediaFileUrl(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }
+                  }} className="text-xs text-slate-500 w-full" required />
+                </div>
+              </div>
+
+              {mediaFileUrl && (
+                <div className="mb-4 text-xs text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex items-center gap-2">
+                  <span>✓ File successfully loaded and ready to upload!</span>
+                </div>
+              )}
+
+              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-sm">
+                Publish Media Lecture
+              </button>
+            </form>
+          )}
+
+          {/* Filters */}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs font-bold text-slate-700 mb-1">Filter by Class</label>
+              <select value={mediaClassFilter} onChange={e => setMediaClassFilter(e.target.value)} className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none">
+                <option value="all">All Classes</option>
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs font-bold text-slate-700 mb-1">Filter by Media Type</label>
+              <select value={mediaTypeFilter} onChange={e => setMediaTypeFilter(e.target.value)} className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none">
+                <option value="all">All Types</option>
+                <option value="video">Videos</option>
+                <option value="audio">Audio</option>
+                <option value="image">Images / Notes</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Media Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {classMedia.filter(m => (mediaClassFilter === 'all' || m.className === mediaClassFilter) && (mediaTypeFilter === 'all' || m.mediaType === mediaTypeFilter)).length === 0 ? (
+              <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-200 text-slate-500">
+                <div className="text-4xl mb-2">🎬</div>
+                <p className="text-sm font-medium">No class media or lectures found matching your filter.</p>
+              </div>
+            ) : (
+              classMedia.filter(m => (mediaClassFilter === 'all' || m.className === mediaClassFilter) && (mediaTypeFilter === 'all' || m.mediaType === mediaTypeFilter)).map(m => (
+                <div key={m.id} className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    {/* Render based on mediaType */}
+                    {m.mediaType === 'video' ? (
+                      <div className="w-full h-48 bg-black relative">
+                        <video controls src={m.fileUrl} className="w-full h-full object-contain" preload="metadata" />
+                      </div>
+                    ) : m.mediaType === 'audio' ? (
+                      <div className="w-full h-40 bg-gradient-to-br from-blue-900 to-indigo-900 text-white p-6 flex flex-col justify-center items-center text-center">
+                        <div className="text-3xl mb-2">🎵</div>
+                        <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full mb-3">Audio Lecture</span>
+                        <audio controls src={m.fileUrl} className="w-full max-w-xs" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-48 bg-slate-100 overflow-hidden relative">
+                        <img src={m.fileUrl} alt={m.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+
+                    <div className="p-6">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-xs font-semibold">{m.className}</span>
+                        <span className="text-xs text-slate-400 capitalize bg-slate-100 px-2.5 py-1 rounded-md">{m.mediaType}</span>
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900 mb-1">{m.title}</h3>
+                      <p className="text-xs text-slate-500 mb-4">Instructor: {m.teacherName || 'Academy Faculty'}</p>
+                    </div>
+                  </div>
+
+                  <div className="px-6 pb-6 pt-0 flex justify-between items-center">
+                    <a href={m.fileUrl} download={`lecture_${m.id}`} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition inline-flex items-center gap-1.5">
+                      Download File
+                    </a>
+                    {isAdmin && (
+                      <button onClick={() => handleDeleteMedia(m.id)} className="bg-rose-50 text-rose-600 hover:bg-rose-100 p-2 rounded-xl text-xs font-semibold transition" title="Delete Lecture">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
