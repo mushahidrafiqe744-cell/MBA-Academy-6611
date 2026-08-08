@@ -349,7 +349,7 @@ export default function App() {
         </div>
 
         {/* Desktop Menu */}
-        <ul className="hidden xl:flex items-center gap-1 list-none text-sm font-medium">
+        <ul className="hidden lg:flex items-center gap-1 list-none text-sm font-medium">
           <li><button onClick={() => setCurrentPage('home')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'home' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Home</button></li>
           <li><button onClick={() => setCurrentPage('about')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'about' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>About Us</button></li>
           <li><button onClick={() => setCurrentPage('teachers')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'teachers' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Teachers</button></li>
@@ -370,7 +370,7 @@ export default function App() {
           <button onClick={toggleAdmin} className={`px-3.5 py-1.5 rounded-full text-xs font-semibold text-white transition shadow-sm ${isAdmin ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-800 hover:bg-blue-900'}`}>
             {isAdmin ? 'Admin ON (Logout)' : 'Admin Mode'}
           </button>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="xl:hidden text-slate-700 p-1">
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-slate-700 p-1">
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -378,7 +378,7 @@ export default function App() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="xl:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-2 shadow-lg">
+        <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-2 shadow-lg">
           {['home', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'results', 'gallery', 'contact', 'records'].map(p => (
             <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
               {p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p}
