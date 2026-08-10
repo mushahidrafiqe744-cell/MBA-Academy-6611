@@ -66,6 +66,9 @@ export default function App() {
   const [onlineTitle, setOnlineTitle] = useState('');
   const [onlineTeacher, setOnlineTeacher] = useState('');
   const [onlineTime, setOnlineTime] = useState('');
+  const [onlineDate, setOnlineDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
   const [onlineLink, setOnlineLink] = useState('');
   const [onlineClassImg, setOnlineClassImg] = useState('');
   const [onlineTeacherImg, setOnlineTeacherImg] = useState('');
@@ -137,11 +140,20 @@ export default function App() {
               link: c.link,
               classImg: c.classImg,
               teacherImg: c.teacherImg,
-              id: c.id
+              id: c.id,
+              date: c.datetime ? c.datetime.split('T')[0] : new Date().toISOString().split('T')[0]
+            };
+            const dbLive = {
+              id: newLive.id,
+              title: newLive.title,
+              teacher: newLive.teacher,
+              time: newLive.time,
+              link: newLive.link,
+              created_at: newLive.date ? new Date(newLive.date + 'T12:00:00Z').toISOString() : new Date().toISOString()
             };
             setOnlineClasses(prev => [newLive, ...prev]);
             try {
-              await supabase.from('online_classes').insert([newLive]);
+              await supabase.from('online_classes').insert([dbLive]);
               await supabase.from('upcoming_classes').delete().eq('id', c.id);
             } catch (err) {
               console.error(err);
@@ -361,8 +373,14 @@ export default function App() {
         if (local) setOnlineClasses(JSON.parse(local));
         else setOnlineClasses([]);
       } else {
-        setOnlineClasses(data);
-        localStorage.setItem('tuition_online_classes_v1', JSON.stringify(data));
+        const mapped = data.map((c: any) => ({
+          ...c,
+          date: c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+          classImg: c.classImg || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600',
+          teacherImg: c.teacherImg || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+        }));
+        setOnlineClasses(mapped);
+        localStorage.setItem('tuition_online_classes_v1', JSON.stringify(mapped));
       }
     } catch (err) {
       console.error(err);
@@ -446,11 +464,21 @@ export default function App() {
       link: c.link,
       classImg: c.classImg,
       teacherImg: c.teacherImg,
-      id: Date.now()
+      id: Date.now(),
+      date: c.datetime ? c.datetime.split('T')[0] : new Date().toISOString().split('T')[0]
+    };
+
+    const dbLive = {
+      id: newLive.id,
+      title: newLive.title,
+      teacher: newLive.teacher,
+      time: newLive.time,
+      link: newLive.link,
+      created_at: newLive.date ? new Date(newLive.date + 'T12:00:00Z').toISOString() : new Date().toISOString()
     };
 
     try {
-      await supabase.from('online_classes').insert([newLive]);
+      await supabase.from('online_classes').insert([dbLive]);
       await supabase.from('upcoming_classes').delete().eq('id', c.id);
     } catch (err) {
       console.error(err);
@@ -580,30 +608,49 @@ export default function App() {
       title: onlineTitle, 
       teacher: onlineTeacher, 
       time: onlineTime, 
+      date: onlineDate || new Date().toISOString().split('T')[0],
       link: onlineLink, 
       classImg: onlineClassImg || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600',
       teacherImg: onlineTeacherImg || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       id: Date.now() 
     };
+
+    // Prepare database insert payload with compatible columns only
+    const dbC = {
+      id: newC.id,
+      title: newC.title,
+      teacher: newC.teacher,
+      time: newC.time,
+      link: newC.link,
+      created_at: newC.date ? new Date(newC.date + 'T12:00:00Z').toISOString() : new Date().toISOString()
+    };
     
     try {
-      const { data, error } = await supabase.from('online_classes').insert([newC]).select();
+      const { data, error } = await supabase.from('online_classes').insert([dbC]).select();
       if (error) {
+        console.error("Supabase insert error:", error);
         const updated = [...onlineClasses, newC];
         setOnlineClasses(updated);
         localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updated));
       } else if (data && data[0]) {
-        const updated = [...onlineClasses, data[0]];
+        const enriched = {
+          ...data[0],
+          date: data[0].created_at ? data[0].created_at.split('T')[0] : newC.date,
+          classImg: newC.classImg,
+          teacherImg: newC.teacherImg
+        };
+        const updated = [...onlineClasses, enriched];
         setOnlineClasses(updated);
         localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updated));
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       const updated = [...onlineClasses, newC];
       setOnlineClasses(updated);
       localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updated));
     }
 
-    setOnlineTitle(''); setOnlineTeacher(''); setOnlineTime(''); setOnlineLink(''); setOnlineClassImg(''); setOnlineTeacherImg('');
+    setOnlineTitle(''); setOnlineTeacher(''); setOnlineTime(''); setOnlineDate(new Date().toISOString().split('T')[0]); setOnlineLink(''); setOnlineClassImg(''); setOnlineTeacherImg('');
     alert('Online class published successfully to backend database & portal!');
   };
 
@@ -784,7 +831,6 @@ export default function App() {
           <li><button onClick={() => setCurrentPage('ramadan')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'ramadan' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>🌙 Rozay</button></li>
           <li><button onClick={() => setCurrentPage('admission')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'admission' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Admission</button></li>
           <li><button onClick={() => setCurrentPage('online')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'online' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Online Classes</button></li>
-          <li><button onClick={() => setCurrentPage('media')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'media' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>🎬 Class Media</button></li>
           <li><button onClick={() => setCurrentPage('results')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'results' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Results</button></li>
           <li><button onClick={() => setCurrentPage('gallery')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
           <li><button onClick={() => setCurrentPage('contact')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
@@ -807,9 +853,9 @@ export default function App() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-2 shadow-lg">
-          {['home', 'ad', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'media', 'results', 'gallery', 'contact', 'records'].map(p => (
+          {['home', 'ad', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'results', 'gallery', 'contact', 'records'].map(p => (
             <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-              {p === 'ad' ? '📢 Professional Admission Ad' : p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p === 'media' ? '🎬 Class Media & Videos' : p}
+              {p === 'ad' ? '📢 Professional Admission Ad' : p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p}
             </button>
           ))}
         </div>
@@ -1240,6 +1286,10 @@ export default function App() {
                   <input type="text" placeholder="Title e.g. Math Class 9th" value={onlineTitle} onChange={e => setOnlineTitle(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
                   <input type="text" placeholder="Teacher Name e.g. Sir Ahmed" value={onlineTeacher} onChange={e => setOnlineTeacher(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
                   <input type="text" placeholder="Timing e.g. Daily 4:00 PM" value={onlineTime} onChange={e => setOnlineTime(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                  <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-amber-200 text-sm">
+                    <span className="text-slate-500 text-xs font-semibold whitespace-nowrap">Class Date:</span>
+                    <input type="date" value={onlineDate} onChange={e => setOnlineDate(e.target.value)} className="w-full bg-transparent outline-none cursor-pointer" required />
+                  </div>
                   <input type="text" placeholder="Zoom / Video Meeting Link (URL)" value={onlineLink} onChange={e => setOnlineLink(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
                   
                   <div className="bg-white p-3 rounded-xl border border-amber-200 flex items-center justify-between gap-3">
@@ -1460,7 +1510,18 @@ export default function App() {
                       <div className="space-y-1.5 mb-6 text-xs text-slate-600">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-400">📅</span>
-                          <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          <span>
+                            {(() => {
+                              if (!c.date) {
+                                return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                              }
+                              const parsed = new Date(c.date);
+                              if (isNaN(parsed.getTime())) {
+                                return c.date;
+                              }
+                              return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            })()}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-slate-400">⏰</span>
@@ -1506,136 +1567,6 @@ export default function App() {
         </div>
       )}
 
-      {/* PAGE: CLASS MEDIA & VIDEOS */}
-      {currentPage === 'media' && (
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
-            <div>
-              <span className="bg-blue-50 text-blue-600 px-3.5 py-1.5 rounded-full text-xs font-semibold inline-block mb-2">Video & Audio Lectures</span>
-              <h1 className="text-3xl font-bold text-slate-900">Class Video, Audio & Media Hub</h1>
-            </div>
-          </div>
-
-          {isAdmin && (
-            <form onSubmit={handleAddMedia} className="bg-amber-50 border border-amber-200 p-6 rounded-2xl mb-8 shadow-sm">
-              <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2"><Plus size={18} /> Upload Class Video, Audio or Image (Admin)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                <input type="text" placeholder="Lecture Title *" value={mediaTitle} onChange={e => setMediaTitle(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
-                <select value={mediaClass} onChange={e => setMediaClass(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none">
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
-                  ))}
-                </select>
-                <select value={mediaType} onChange={e => setMediaType(e.target.value as any)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none">
-                  <option value="video">Video Lecture (MP4/WebM)</option>
-                  <option value="audio">Audio Lecture (MP3/WAV)</option>
-                  <option value="image">Image / Notes Diagram</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <input type="text" placeholder="Teacher Name (optional)" value={mediaTeacher} onChange={e => setMediaTeacher(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" />
-                <div className="bg-white p-3 rounded-xl border border-amber-200 flex items-center gap-3">
-                  <label className="text-xs font-bold text-slate-700 whitespace-nowrap">Upload File *</label>
-                  <input type="file" accept="video/*,audio/*,image/*" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = () => setMediaFileUrl(reader.result as string);
-                      reader.readAsDataURL(file);
-                    }
-                  }} className="text-xs text-slate-500 w-full" required />
-                </div>
-              </div>
-
-              {mediaFileUrl && (
-                <div className="mb-4 text-xs text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex items-center gap-2">
-                  <span>✓ File successfully loaded and ready to upload!</span>
-                </div>
-              )}
-
-              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-sm">
-                Publish Media Lecture
-              </button>
-            </form>
-          )}
-
-          {/* Filters */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-wrap gap-4 items-center">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-bold text-slate-700 mb-1">Filter by Class</label>
-              <select value={mediaClassFilter} onChange={e => setMediaClassFilter(e.target.value)} className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none">
-                <option value="all">All Classes</option>
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-bold text-slate-700 mb-1">Filter by Media Type</label>
-              <select value={mediaTypeFilter} onChange={e => setMediaTypeFilter(e.target.value)} className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none">
-                <option value="all">All Types</option>
-                <option value="video">Videos</option>
-                <option value="audio">Audio</option>
-                <option value="image">Images / Notes</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Media Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {classMedia.filter(m => (mediaClassFilter === 'all' || m.className === mediaClassFilter) && (mediaTypeFilter === 'all' || m.mediaType === mediaTypeFilter)).length === 0 ? (
-              <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-200 text-slate-500">
-                <div className="text-4xl mb-2">🎬</div>
-                <p className="text-sm font-medium">No class media or lectures found matching your filter.</p>
-              </div>
-            ) : (
-              classMedia.filter(m => (mediaClassFilter === 'all' || m.className === mediaClassFilter) && (mediaTypeFilter === 'all' || m.mediaType === mediaTypeFilter)).map(m => (
-                <div key={m.id} className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col justify-between">
-                  <div>
-                    {/* Render based on mediaType */}
-                    {m.mediaType === 'video' ? (
-                      <div className="w-full h-48 bg-black relative">
-                        <video controls src={m.fileUrl} className="w-full h-full object-contain" preload="metadata" />
-                      </div>
-                    ) : m.mediaType === 'audio' ? (
-                      <div className="w-full h-40 bg-gradient-to-br from-blue-900 to-indigo-900 text-white p-6 flex flex-col justify-center items-center text-center">
-                        <div className="text-3xl mb-2">🎵</div>
-                        <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full mb-3">Audio Lecture</span>
-                        <audio controls src={m.fileUrl} className="w-full max-w-xs" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-48 bg-slate-100 overflow-hidden relative">
-                        <img src={m.fileUrl} alt={m.title} className="w-full h-full object-cover" />
-                      </div>
-                    )}
-
-                    <div className="p-6">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-xs font-semibold">{m.className}</span>
-                        <span className="text-xs text-slate-400 capitalize bg-slate-100 px-2.5 py-1 rounded-md">{m.mediaType}</span>
-                      </div>
-                      <h3 className="text-base font-bold text-slate-900 mb-1">{m.title}</h3>
-                      <p className="text-xs text-slate-500 mb-4">Instructor: {m.teacherName || 'Academy Faculty'}</p>
-                    </div>
-                  </div>
-
-                  <div className="px-6 pb-6 pt-0 flex justify-between items-center">
-                    <a href={m.fileUrl} download={`lecture_${m.id}`} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition inline-flex items-center gap-1.5">
-                      Download File
-                    </a>
-                    {isAdmin && (
-                      <button onClick={() => handleDeleteMedia(m.id)} className="bg-rose-50 text-rose-600 hover:bg-rose-100 p-2 rounded-xl text-xs font-semibold transition" title="Delete Lecture">
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
 
       {/* PAGE: RESULTS */}
       {currentPage === 'results' && (
