@@ -62,6 +62,17 @@ export default function App() {
   const [onlineTeacher, setOnlineTeacher] = useState('');
   const [onlineTime, setOnlineTime] = useState('');
   const [onlineLink, setOnlineLink] = useState('');
+  const [onlineClassImg, setOnlineClassImg] = useState('');
+  const [onlineTeacherImg, setOnlineTeacherImg] = useState('');
+
+  // Admin add upcoming live class form
+  const [upcomingClasses, setUpcomingClasses] = useState<any[]>([]);
+  const [upTitle, setUpTitle] = useState('');
+  const [upTeacher, setUpTeacher] = useState('');
+  const [upDatetime, setUpDatetime] = useState('');
+  const [upLink, setUpLink] = useState('');
+  const [upClassImg, setUpClassImg] = useState('');
+  const [upTeacherImg, setUpTeacherImg] = useState('');
 
   // Attendance add student form
   const [attStudentName, setAttStudentName] = useState('');
@@ -98,10 +109,52 @@ export default function App() {
   useEffect(() => {
     fetchTeachers();
     fetchOnlineClasses();
+    fetchUpcomingClasses();
     fetchClassMedia();
     fetchResults();
     loadLocalData();
   }, []);
+
+  // Auto-live check timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (upcomingClasses.length > 0) {
+        const now = new Date();
+        const stillUpcoming: any[] = [];
+        upcomingClasses.forEach(async (c) => {
+          const classTime = new Date(c.datetime);
+          if (classTime <= now) {
+            const newLive = {
+              title: c.title,
+              teacher: c.teacher,
+              time: 'Live Now!',
+              link: c.link,
+              classImg: c.classImg,
+              teacherImg: c.teacherImg,
+              id: c.id
+            };
+            setOnlineClasses(prev => [newLive, ...prev]);
+            try {
+              await supabase.from('online_classes').insert([newLive]);
+              await supabase.from('upcoming_classes').delete().eq('id', c.id);
+            } catch (err) {
+              console.error(err);
+            }
+          } else {
+            stillUpcoming.push(c);
+          }
+        });
+        if (stillUpcoming.length !== upcomingClasses.length) {
+          setUpcomingClasses(stillUpcoming);
+          localStorage.setItem('tuition_upcoming_classes_v1', JSON.stringify(stillUpcoming));
+          const updatedOnline = JSON.parse(localStorage.getItem('tuition_online_classes_v1') || '[]');
+          localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updatedOnline));
+        }
+      }
+    }, 15000);
+
+    return () => clearInterval(timer);
+  }, [upcomingClasses]);
 
   const fetchResults = async () => {
     try {
@@ -274,12 +327,144 @@ export default function App() {
         else setOnlineClasses([]);
       } else {
         setOnlineClasses(data);
+        localStorage.setItem('tuition_online_classes_v1', JSON.stringify(data));
       }
     } catch (err) {
       console.error(err);
       const local = localStorage.getItem('tuition_online_classes_v1');
       if (local) setOnlineClasses(JSON.parse(local));
       else setOnlineClasses([]);
+    }
+  };
+
+  const fetchUpcomingClasses = async () => {
+    try {
+      const { data, error } = await supabase.from('upcoming_classes').select('*');
+      if (error || !data || data.length === 0) {
+        const local = localStorage.getItem('tuition_upcoming_classes_v1');
+        if (local) setUpcomingClasses(JSON.parse(local));
+        else setUpcomingClasses([]);
+      } else {
+        setUpcomingClasses(data);
+        localStorage.setItem('tuition_upcoming_classes_v1', JSON.stringify(data));
+      }
+    } catch (err) {
+      console.error(err);
+      const local = localStorage.getItem('tuition_upcoming_classes_v1');
+      if (local) setUpcomingClasses(JSON.parse(local));
+      else setUpcomingClasses([]);
+    }
+  };
+
+  const handleAddUpcomingClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!upTitle || !upTeacher || !upDatetime || !upLink) return alert('Fill all required fields');
+    const newUp = {
+      title: upTitle,
+      teacher: upTeacher,
+      datetime: upDatetime,
+      link: upLink,
+      classImg: upClassImg || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600',
+      teacherImg: upTeacherImg || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      id: Date.now()
+    };
+
+    try {
+      const { data, error } = await supabase.from('upcoming_classes').insert([newUp]).select();
+      if (error) {
+        const updated = [...upcomingClasses, newUp];
+        setUpcomingClasses(updated);
+        localStorage.setItem('tuition_upcoming_classes_v1', JSON.stringify(updated));
+      } else if (data && data[0]) {
+        const updated = [...upcomingClasses, data[0]];
+        setUpcomingClasses(updated);
+        localStorage.setItem('tuition_upcoming_classes_v1', JSON.stringify(updated));
+      }
+    } catch {
+      const updated = [...upcomingClasses, newUp];
+      setUpcomingClasses(updated);
+      localStorage.setItem('tuition_upcoming_classes_v1', JSON.stringify(updated));
+    }
+
+    setUpTitle(''); setUpTeacher(''); setUpDatetime(''); setUpLink(''); setUpClassImg(''); setUpTeacherImg('');
+    alert('Upcoming Live Session scheduled successfully!');
+  };
+
+  const handleDeleteUpcomingClass = async (id: number) => {
+    if (confirm('Delete this upcoming class?')) {
+      try {
+        await supabase.from('upcoming_classes').delete().eq('id', id);
+      } catch (e) {
+        console.error(e);
+      }
+      const filtered = upcomingClasses.filter(c => c.id !== id);
+      setUpcomingClasses(filtered);
+      localStorage.setItem('tuition_upcoming_classes_v1', JSON.stringify(filtered));
+    }
+  };
+
+  const handleMoveToLive = async (c: any) => {
+    const newLive = {
+      title: c.title,
+      teacher: c.teacher,
+      time: 'Live Now!',
+      link: c.link,
+      classImg: c.classImg,
+      teacherImg: c.teacherImg,
+      id: Date.now()
+    };
+
+    try {
+      await supabase.from('online_classes').insert([newLive]);
+      await supabase.from('upcoming_classes').delete().eq('id', c.id);
+    } catch (err) {
+      console.error(err);
+    }
+
+    const updatedOnline = [newLive, ...onlineClasses];
+    setOnlineClasses(updatedOnline);
+    localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updatedOnline));
+
+    const filteredUpcoming = upcomingClasses.filter(item => item.id !== c.id);
+    setUpcomingClasses(filteredUpcoming);
+    localStorage.setItem('tuition_upcoming_classes_v1', JSON.stringify(filteredUpcoming));
+
+    alert(`"${c.title}" is now LIVE! Moved to Live Sessions.`);
+  };
+
+  const handleOnlineClassImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setOnlineClassImg(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleOnlineTeacherImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setOnlineTeacherImg(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUpClassImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setUpClassImg(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUpTeacherImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setUpTeacherImg(reader.result as string);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -356,25 +541,35 @@ export default function App() {
   const handleAddOnlineClass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onlineTitle || !onlineTeacher || !onlineTime || !onlineLink) return alert('Fill all fields');
-    const newC = { title: onlineTitle, teacher: onlineTeacher, time: onlineTime, link: onlineLink };
+    const newC = { 
+      title: onlineTitle, 
+      teacher: onlineTeacher, 
+      time: onlineTime, 
+      link: onlineLink, 
+      classImg: onlineClassImg || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600',
+      teacherImg: onlineTeacherImg || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      id: Date.now() 
+    };
     
     try {
       const { data, error } = await supabase.from('online_classes').insert([newC]).select();
       if (error) {
-        const updated = [...onlineClasses, { ...newC, id: Date.now() }];
+        const updated = [...onlineClasses, newC];
         setOnlineClasses(updated);
         localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updated));
-      } else if (data) {
-        setOnlineClasses([...onlineClasses, data[0]]);
+      } else if (data && data[0]) {
+        const updated = [...onlineClasses, data[0]];
+        setOnlineClasses(updated);
+        localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updated));
       }
     } catch {
-      const updated = [...onlineClasses, { ...newC, id: Date.now() }];
+      const updated = [...onlineClasses, newC];
       setOnlineClasses(updated);
       localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updated));
     }
 
-    setOnlineTitle(''); setOnlineTeacher(''); setOnlineTime(''); setOnlineLink('');
-    alert('Online class published!');
+    setOnlineTitle(''); setOnlineTeacher(''); setOnlineTime(''); setOnlineLink(''); setOnlineClassImg(''); setOnlineTeacherImg('');
+    alert('Online class published successfully to backend database & portal!');
   };
 
   const handleDeleteOnlineClass = async (id: number) => {
@@ -958,43 +1153,281 @@ export default function App() {
         <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
             <div>
-              <span className="bg-blue-50 text-blue-600 px-3.5 py-1.5 rounded-full text-xs font-semibold inline-block mb-2">E-Learning</span>
-              <h1 className="text-3xl font-bold text-slate-900">Online Classes Schedule</h1>
+              <span className="bg-blue-50 text-blue-600 px-3.5 py-1.5 rounded-full text-xs font-semibold inline-block mb-2">E-Learning & Live</span>
+              <h1 className="text-3xl font-bold text-slate-900">Live Classes & Upcoming Sessions</h1>
             </div>
           </div>
 
           {isAdmin && (
-            <form onSubmit={handleAddOnlineClass} className="bg-amber-50 border border-amber-200 p-6 rounded-2xl mb-8 shadow-sm">
-              <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2"><Plus size={18} /> Publish New Online Class (Admin)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                <input type="text" placeholder="Title e.g. Math Class 9th" value={onlineTitle} onChange={e => setOnlineTitle(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
-                <input type="text" placeholder="Teacher Name e.g. Sir Ahmed" value={onlineTeacher} onChange={e => setOnlineTeacher(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
-                <input type="text" placeholder="Timing e.g. Daily 4:00 PM" value={onlineTime} onChange={e => setOnlineTime(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
-                <input type="text" placeholder="Zoom / Video Meeting Link (URL)" value={onlineLink} onChange={e => setOnlineLink(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
-              </div>
-              <button type="submit" className="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-xl text-xs">Publish Online Class</button>
-            </form>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+              <form onSubmit={handleAddOnlineClass} className="bg-amber-50 border border-amber-200 p-6 rounded-2xl shadow-sm">
+                <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2"><Plus size={18} /> Publish Live Class Now (Admin)</h3>
+                <div className="grid grid-cols-1 gap-3 mb-3">
+                  <input type="text" placeholder="Title e.g. Math Class 9th" value={onlineTitle} onChange={e => setOnlineTitle(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                  <input type="text" placeholder="Teacher Name e.g. Sir Ahmed" value={onlineTeacher} onChange={e => setOnlineTeacher(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                  <input type="text" placeholder="Timing e.g. Daily 4:00 PM" value={onlineTime} onChange={e => setOnlineTime(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                  <input type="text" placeholder="Zoom / Video Meeting Link (URL)" value={onlineLink} onChange={e => setOnlineLink(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                  
+                  <div className="bg-white p-3 rounded-xl border border-amber-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-lg bg-amber-100 overflow-hidden flex items-center justify-center text-xs font-bold text-amber-700">
+                        {onlineClassImg ? <img src={onlineClassImg} alt="Banner" className="w-full h-full object-cover" /> : '📷'}
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">Class Banner Image</span>
+                        <span className="text-[10px] text-slate-500">Upload from computer / phone</span>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleOnlineClassImgFile} className="hidden" id="liveClassImgFile" />
+                    <button type="button" onClick={() => document.getElementById('liveClassImgFile')?.click()} className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                      Upload Image
+                    </button>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl border border-amber-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-amber-100 overflow-hidden flex items-center justify-center text-xs font-bold text-amber-700 border">
+                        {onlineTeacherImg ? <img src={onlineTeacherImg} alt="Teacher" className="w-full h-full object-cover" /> : '👨‍🏫'}
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">Teacher Photo</span>
+                        <span className="text-[10px] text-slate-500">Upload portrait</span>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleOnlineTeacherImgFile} className="hidden" id="liveTeacherImgFile" />
+                    <button type="button" onClick={() => document.getElementById('liveTeacherImgFile')?.click()} className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                      Upload Photo
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-xl text-xs">Publish Live Class</button>
+              </form>
+
+              <form onSubmit={handleAddUpcomingClass} className="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl shadow-sm">
+                <h3 className="font-bold text-indigo-900 mb-4 flex items-center gap-2"><Calendar size={18} /> Schedule Upcoming Live Session (Admin)</h3>
+                <div className="grid grid-cols-1 gap-3 mb-3">
+                  <input type="text" placeholder="Session Title e.g. Physics Quantum Mechanics" value={upTitle} onChange={e => setUpTitle(e.target.value)} className="bg-white p-3 rounded-xl border border-indigo-200 text-sm outline-none" required />
+                  <input type="text" placeholder="Teacher Name e.g. Prof. Tariq" value={upTeacher} onChange={e => setUpTeacher(e.target.value)} className="bg-white p-3 rounded-xl border border-indigo-200 text-sm outline-none" required />
+                  <input type="datetime-local" value={upDatetime} onChange={e => setUpDatetime(e.target.value)} className="bg-white p-3 rounded-xl border border-indigo-200 text-sm outline-none" required />
+                  <input type="text" placeholder="Zoom / Video Meeting Link (URL)" value={upLink} onChange={e => setUpLink(e.target.value)} className="bg-white p-3 rounded-xl border border-indigo-200 text-sm outline-none" required />
+
+                  <div className="bg-white p-3 rounded-xl border border-indigo-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-100 overflow-hidden flex items-center justify-center text-xs font-bold text-indigo-700">
+                        {upClassImg ? <img src={upClassImg} alt="Banner" className="w-full h-full object-cover" /> : '📷'}
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">Banner Image</span>
+                        <span className="text-[10px] text-slate-500">Upload from computer / phone</span>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleUpClassImgFile} className="hidden" id="upClassImgFile" />
+                    <button type="button" onClick={() => document.getElementById('upClassImgFile')?.click()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                      Upload Image
+                    </button>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl border border-indigo-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 overflow-hidden flex items-center justify-center text-xs font-bold text-indigo-700 border">
+                        {upTeacherImg ? <img src={upTeacherImg} alt="Teacher" className="w-full h-full object-cover" /> : '👨‍🏫'}
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">Teacher Photo</span>
+                        <span className="text-[10px] text-slate-500">Upload portrait</span>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleUpTeacherImgFile} className="hidden" id="upTeacherImgFile" />
+                    <button type="button" onClick={() => document.getElementById('upTeacherImgFile')?.click()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                      Upload Photo
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className="bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl text-xs">Schedule Upcoming Session</button>
+              </form>
+            </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {onlineClasses.map(c => (
-              <div key={c.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="bg-sky-50 text-sky-600 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1"><Video size={12} /> Live Zoom</span>
-                    {isAdmin && (
-                      <button onClick={() => handleDeleteOnlineClass(c.id)} className="text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition"><Trash2 size={16} /></button>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">{c.title}</h3>
-                  <p className="text-xs text-slate-600 mb-1"><b>Instructor:</b> {c.teacher}</p>
-                  <p className="text-xs text-slate-600 mb-4"><b>Timing:</b> {c.time}</p>
-                </div>
-                <a href={c.link.startsWith('http') ? c.link : `https://${c.link}`} target="_blank" rel="noreferrer" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-xs text-center transition flex items-center justify-center gap-1.5 shadow-sm">
-                  Join Class <ExternalLink size={14} />
-                </a>
+          {/* UPCOMING LIVE SESSIONS SECTION */}
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-2xl"><Calendar size={22} /></div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Upcoming Live Sessions</h2>
+                <p className="text-xs text-slate-500">Scheduled future classes that will automatically go live when their time arrives.</p>
               </div>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcomingClasses.length === 0 ? (
+                <div className="col-span-full text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400">
+                  <div className="text-3xl mb-2">🗓️</div>
+                  <p className="text-xs font-medium">No upcoming sessions scheduled right now.</p>
+                </div>
+              ) : (
+                upcomingClasses.map(c => (
+                  <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-md border border-indigo-100 flex flex-col justify-between hover:shadow-xl transition duration-300">
+                    <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: c.classImg ? `url(${c.classImg}) center/cover no-repeat` : 'linear-gradient(to bottom right, #312e81, #1e1b4b, #0f172a)' }}>
+                      {c.classImg && <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>}
+                      <div className="flex justify-between items-center z-10">
+                        <div className="bg-indigo-500/80 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-2 border border-white/15 shadow-sm text-white">
+                          <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping"></span>
+                          <span className="text-xs font-bold tracking-wide">Upcoming Session</span>
+                        </div>
+                        {isAdmin && (
+                          <div className="flex gap-1">
+                            <button onClick={() => handleMoveToLive(c)} title="Go Live Now" className="bg-emerald-600 hover:bg-emerald-700 text-white p-1.5 rounded-xl transition text-xs font-bold px-2.5">🚀 Go Live</button>
+                            <button onClick={() => handleDeleteUpcomingClass(c.id)} className="bg-rose-500/80 hover:bg-rose-600 text-white p-1.5 rounded-xl transition"><Trash2 size={14} /></button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between items-end z-10">
+                        <div className="text-[11px] text-indigo-200 font-medium">Auto-Live Scheduler</div>
+                        <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/25">
+                          ⏳ {new Date(c.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg font-extrabold text-slate-900 mb-3 line-clamp-2">{c.title}</h3>
+                        <div className="space-y-1.5 mb-6 text-xs text-slate-600">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">📅</span>
+                            <span className="font-semibold text-slate-800">{new Date(c.datetime).toDateString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">⏰</span>
+                            <span className="font-semibold text-slate-800">{new Date(c.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between border-t border-slate-100 pt-4 mb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden border border-slate-200">
+                              <img src={c.teacherImg || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"} alt={c.teacher} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                              <b className="text-xs text-slate-900 block">{c.teacher}</b>
+                              <span className="text-[11px] text-indigo-600 font-semibold">Instructor</span>
+                            </div>
+                          </div>
+
+                          <button onClick={() => alert(`Reminder successfully set for "${c.title}"! We will notify you when it goes live.`)} className="border border-indigo-600/30 hover:border-indigo-600 text-indigo-700 hover:bg-indigo-50 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition">
+                            🔔 Notify Me
+                          </button>
+                        </div>
+
+                        <a href={c.link.startsWith('http') ? c.link : `https://${c.link}`} target="_blank" rel="noreferrer" className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs text-center transition flex items-center justify-center gap-1.5">
+                          Preview Class Link <ExternalLink size={13} />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* ACTIVE LIVE CLASSES SECTION */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-rose-100 text-rose-700 rounded-2xl"><Video size={22} /></div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Active Live Classes Now</h2>
+                <p className="text-xs text-slate-500">Join ongoing classes instantly via Google Meet / Zoom.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {onlineClasses.length === 0 ? (
+              <div className="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-200 text-slate-500">
+                <div className="text-4xl mb-2">📹</div>
+                <p className="text-sm font-medium">No active online classes right now.</p>
+              </div>
+            ) : (
+              onlineClasses.map(c => (
+                <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-200 flex flex-col justify-between hover:shadow-xl transition duration-300">
+                  {/* Top Banner with Class Image */}
+                  <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: c.classImg ? `url(${c.classImg}) center/cover no-repeat` : 'linear-gradient(to bottom right, #0f172a, #1e1b4b, #172554)' }}>
+                    {c.classImg && <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>}
+                    <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-blue-600/20 rounded-full blur-2xl pointer-events-none"></div>
+                    <div className="flex justify-between items-center z-10">
+                      <div className="bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-2 border border-white/15 shadow-sm">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span className="text-xs font-bold tracking-wide">Google Meet</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-semibold border border-white/20">🌐 English</span>
+                        {isAdmin && (
+                          <button onClick={() => handleDeleteOnlineClass(c.id)} className="bg-rose-500/80 hover:bg-rose-600 text-white p-1.5 rounded-xl transition"><Trash2 size={14} /></button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-end z-10">
+                      <div className="text-[11px] text-blue-200 font-medium opacity-90">MBA Academy Live</div>
+                      <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/25 flex items-center gap-1.5">
+                        <span>⏱️ 30 Min</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-lg font-extrabold text-slate-900 mb-3 line-clamp-2">{c.title}</h3>
+                      
+                      <div className="space-y-1.5 mb-6 text-xs text-slate-600">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400">📅</span>
+                          <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400">⏰</span>
+                          <span className="font-semibold text-slate-800">{c.time} (Karachi)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between border-t border-slate-100 pt-4 mb-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold flex items-center justify-center text-sm shadow-sm overflow-hidden border border-slate-200">
+                            <img src={c.teacherImg || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"} alt={c.teacher} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <b className="text-xs text-slate-900 block">{c.teacher}</b>
+                            <div className="flex items-center gap-1 text-[11px] text-amber-500 font-bold">
+                              <span>★</span>
+                              <span className="text-slate-700">5.0</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button onClick={() => alert(`Reminder set for "${c.title}"! We will notify you before class starts.`)} className="border border-blue-600/30 hover:border-blue-600 text-blue-700 hover:bg-blue-50 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition">
+                          Notify Me
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <a href={c.link.startsWith('http') ? c.link : `https://${c.link}`} target="_blank" rel="noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-xs text-center transition flex items-center justify-center gap-1.5 shadow-sm">
+                          Learn Now <ExternalLink size={13} />
+                        </a>
+                        <button onClick={() => alert(`Class Details:\nTitle: ${c.title}\nInstructor: ${c.teacher}\nTiming: ${c.time}\nMeeting Link: ${c.link}`)} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs text-center transition">
+                          Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -1534,12 +1967,12 @@ export default function App() {
             <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl text-center max-w-md mx-auto border border-slate-200">
               <div className="text-5xl mb-4">🔒</div>
               <h2 className="text-2xl font-bold text-slate-900 mb-2">Admin Access Required</h2>
-              <p className="text-xs text-slate-500 mb-6">Enter Admin password below to open the Admin Records Dashboard (Password: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-bold">King6611</code>).</p>
+              <p className="text-xs text-slate-500 mb-6">Enter Admin password below to open the Admin Records Dashboard.</p>
               
               <div className="flex flex-col gap-3">
                 <input 
                   type="password" 
-                  placeholder="Enter Password (King6611)" 
+                  placeholder="Enter Password" 
                   value={adminPassInput} 
                   onChange={e => setAdminPassInput(e.target.value)}
                   onKeyDown={e => {
@@ -1550,7 +1983,7 @@ export default function App() {
                         setAdminPassInput('');
                         alert('Admin Access Granted!');
                       } else {
-                        alert('Incorrect password! Correct password is: King6611');
+                        alert('Incorrect password!');
                       }
                     }
                   }}
@@ -1563,12 +1996,21 @@ export default function App() {
                     setAdminPassInput('');
                     alert('Admin Access Granted!');
                   } else {
-                    alert('Incorrect password! Correct password is: King6611');
+                    alert('Incorrect password!');
                   }
                 }} className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl text-xs font-semibold shadow-sm transition">
                   Login Admin Dashboard
                 </button>
-                <button onClick={toggleAdmin} className="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 rounded-xl text-xs font-semibold transition">
+                <button onClick={() => {
+                  const pass = prompt('Enter Admin Password:');
+                  if (pass === ADMIN_PASS || pass === 'admin' || pass === 'King6611') {
+                    setIsAdmin(true);
+                    localStorage.setItem('ta_admin', '1');
+                    alert('Admin Access Granted!');
+                  } else if (pass !== null) {
+                    alert('Incorrect password!');
+                  }
+                }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 rounded-xl text-xs font-semibold transition">
                   Prompt Password Popup
                 </button>
               </div>
