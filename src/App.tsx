@@ -689,8 +689,8 @@ export default function App() {
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-3.5 flex justify-between items-center shadow-xs">
         <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentPage('home')}>
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-900 via-blue-700 to-indigo-600 text-white flex items-center justify-center font-extrabold text-2xl shadow-lg ring-2 ring-blue-500/20 group-hover:scale-105 transition-transform">
-            🎓
+          <div className="w-11 h-11 rounded-2xl overflow-hidden bg-white shadow-md ring-2 ring-blue-500/20 group-hover:scale-105 transition-transform flex items-center justify-center p-0.5">
+            <img src="/logo.jpg" alt="MBA Academy Logo" className="w-full h-full object-contain rounded-xl" referrerPolicy="no-referrer" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -704,6 +704,7 @@ export default function App() {
         {/* Desktop Menu */}
         <ul className="hidden lg:flex items-center gap-1 list-none text-sm font-medium">
           <li><button onClick={() => setCurrentPage('home')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'home' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Home</button></li>
+          <li><button onClick={() => setCurrentPage('ad')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'ad' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-amber-600 hover:bg-amber-50 font-medium'}`}>📢 Pro Ad</button></li>
           <li><button onClick={() => setCurrentPage('about')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'about' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>About Us</button></li>
           <li><button onClick={() => setCurrentPage('teachers')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'teachers' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Teachers</button></li>
           <li><button onClick={() => { setCurrentPage('attendance'); setSelectedClassForAttendance(null); }} className={`px-3 py-2 rounded-lg transition ${currentPage === 'attendance' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Attendance</button></li>
@@ -733,9 +734,9 @@ export default function App() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-2 shadow-lg">
-          {['home', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'media', 'results', 'gallery', 'contact', 'records'].map(p => (
+          {['home', 'ad', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'media', 'results', 'gallery', 'contact', 'records'].map(p => (
             <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-              {p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p === 'media' ? '🎬 Class Media & Videos' : p}
+              {p === 'ad' ? '📢 Professional Admission Ad' : p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p === 'media' ? '🎬 Class Media & Videos' : p}
             </button>
           ))}
         </div>
@@ -1960,6 +1961,80 @@ export default function App() {
         </div>
       )}
 
+      {/* PAGE: PROFESSIONAL AD POSTER */}
+      {currentPage === 'ad' && (
+        <div className="max-w-5xl mx-auto px-6 py-16">
+          <div className="text-center mb-10">
+            <span className="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider inline-block mb-3">Official Advertisement & Poster</span>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">MBA Academy Admission Poster 2026</h1>
+            <p className="text-sm text-slate-600 mt-2 max-w-xl mx-auto">Preview and share our professional coaching admission ad. Print or download for distribution.</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950 text-white rounded-3xl p-8 md:p-14 shadow-2xl border-4 border-amber-400 relative overflow-hidden">
+            {/* Background design accents */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-2xl bg-white p-1 shadow-2xl mb-6 flex items-center justify-center">
+                <img src="/logo.jpg" alt="MBA Academy Logo" className="w-full h-full object-contain rounded-xl" referrerPolicy="no-referrer" />
+              </div>
+
+              <div className="bg-amber-400 text-blue-950 px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-md">
+                ⭐ Admissions Open 2026-27 ⭐
+              </div>
+
+              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">
+                MBA ACADEMY
+              </h2>
+              <p className="text-amber-300 font-bold text-lg md:text-xl tracking-wide mb-6">
+                CLASSES 1 TO 10 • QUALITY EDUCATION & PROFESSIONAL COACHING
+              </p>
+
+              <div className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 my-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="text-2xl mb-2">📚</div>
+                  <h4 className="font-bold text-white text-sm mb-1">Expert Coaching</h4>
+                  <p className="text-xs text-slate-300">Specialized subject coaching for Math, Science, English, Urdu & Computer.</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="text-2xl mb-2">🏆</div>
+                  <h4 className="font-bold text-white text-sm mb-1">Proven Results</h4>
+                  <p className="text-xs text-slate-300">100% success rate with top board positions and weekly test monitoring.</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="text-2xl mb-2">👥</div>
+                  <h4 className="font-bold text-white text-sm mb-1">Small Batches</h4>
+                  <p className="text-xs text-slate-300">Individual attention to every student with daily homework support.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-6 my-6 text-sm">
+                <div className="bg-emerald-600/90 text-white px-6 py-3 rounded-2xl shadow-lg font-bold flex items-center gap-2">
+                  <span>📞 Phone:</span> <span>0329-0725117 / 0341-8709574</span>
+                </div>
+                <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg font-bold flex items-center gap-2 transition">
+                  <span>💬 WhatsApp Support:</span> <span>0329-0725117</span>
+                </a>
+              </div>
+
+              <div className="mt-4 text-xs text-slate-300 font-medium">
+                📍 Visit Us Today for Free Demo Class & Assessment • Limited Seats Available!
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-4 mt-8">
+            <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition">
+              🖨️ Print / Save Poster as PDF
+            </button>
+            <a href="https://wa.me/?text=Admissions%20Open%20at%20MBA%20Academy%20for%20Classes%201%20to%2010!%20Call%2003290725117" target="_blank" rel="noreferrer" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition">
+              💬 Share Ad on WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* PAGE: ADMIN RECORDS */}
       {currentPage === 'records' && (
         <div className="max-w-6xl mx-auto px-6 py-16">
@@ -2107,7 +2182,9 @@ export default function App() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">🎓</span>
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-0.5 flex items-center justify-center">
+                <img src="/logo.jpg" alt="Logo" className="w-full h-full object-contain rounded-md" referrerPolicy="no-referrer" />
+              </div>
               <b className="text-white text-lg font-bold">MBA Academy</b>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">Class 1 to 10 - Quality Education & Professional Coaching. Admissions Open. Contact: 03290725117</p>
