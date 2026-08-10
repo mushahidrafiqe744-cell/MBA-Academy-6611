@@ -19,6 +19,11 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Data states
+  const [academyLogo, setAcademyLogo] = useState<string>(() => {
+    return localStorage.getItem('tuition_academy_logo_v1') || '/logo.jpg';
+  });
+  const [logoError, setLogoError] = useState(false);
+
   const [teachers, setTeachers] = useState<any[]>([]);
   const [onlineClasses, setOnlineClasses] = useState<any[]>([]);
   const [admissions, setAdmissions] = useState<any[]>([]);
@@ -112,6 +117,7 @@ export default function App() {
     fetchUpcomingClasses();
     fetchClassMedia();
     fetchResults();
+    fetchAdmissions();
     loadLocalData();
   }, []);
 
@@ -171,6 +177,35 @@ export default function App() {
       const local = localStorage.getItem('tuition_student_results_v1');
       if (local) setResultsList(JSON.parse(local));
       else setResultsList([]);
+    }
+  };
+
+  const fetchAdmissions = async () => {
+    try {
+      const { data, error } = await supabase.from('admissions').select('*').order('created_at', { ascending: false });
+      if (error || !data) {
+        const local = localStorage.getItem('tuition_submitted_admissions_v1');
+        if (local) setAdmissions(JSON.parse(local));
+      } else {
+        const mappedData = data.map((item: any) => ({
+          id: item.id,
+          studentName: item.student_name,
+          parentName: item.parent_name,
+          email: item.email,
+          phone: item.phone,
+          rollNo: item.roll_no,
+          className: item.class_name,
+          address: item.address,
+          photo: item.photo,
+          created_at: item.created_at
+        }));
+        setAdmissions(mappedData);
+        localStorage.setItem('tuition_submitted_admissions_v1', JSON.stringify(mappedData));
+      }
+    } catch (err) {
+      console.error("Error fetching admissions from Supabase:", err);
+      const local = localStorage.getItem('tuition_submitted_admissions_v1');
+      if (local) setAdmissions(JSON.parse(local));
     }
   };
 
@@ -590,7 +625,19 @@ export default function App() {
     e.preventDefault();
     if (!admStudentName || !admRoll || !admClass) return alert('Fill required fields');
 
-    const newAdmission = {
+    const dbAdmission = {
+      student_name: admStudentName,
+      parent_name: admParentName,
+      email: admEmail,
+      phone: admPhone,
+      roll_no: admRoll,
+      class_name: admClass,
+      address: admAddress,
+      photo: admPhoto,
+      created_at: new Date().toISOString()
+    };
+
+    let insertedAdmission = {
       id: Date.now(),
       studentName: admStudentName,
       parentName: admParentName,
@@ -600,16 +647,32 @@ export default function App() {
       className: admClass,
       address: admAddress,
       photo: admPhoto,
-      created_at: new Date().toISOString()
+      created_at: dbAdmission.created_at
     };
 
     try {
-      await supabase.from('admissions').insert([newAdmission]);
+      const { data, error } = await supabase.from('admissions').insert([dbAdmission]).select();
+      if (error) {
+        console.error("Supabase admission insert error:", error);
+      } else if (data && data[0]) {
+        insertedAdmission = {
+          id: data[0].id,
+          studentName: data[0].student_name,
+          parentName: data[0].parent_name,
+          email: data[0].email,
+          phone: data[0].phone,
+          rollNo: data[0].roll_no,
+          className: data[0].class_name,
+          address: data[0].address,
+          photo: data[0].photo,
+          created_at: data[0].created_at
+        };
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Error during Supabase admission insert:", err);
     }
 
-    const updatedAdmissions = [newAdmission, ...admissions];
+    const updatedAdmissions = [insertedAdmission, ...admissions];
     setAdmissions(updatedAdmissions);
     localStorage.setItem('tuition_submitted_admissions_v1', JSON.stringify(updatedAdmissions));
 
@@ -689,8 +752,18 @@ export default function App() {
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-3.5 flex justify-between items-center shadow-xs">
         <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentPage('home')}>
-          <div className="w-11 h-11 rounded-2xl overflow-hidden bg-white shadow-md ring-2 ring-blue-500/20 group-hover:scale-105 transition-transform flex items-center justify-center p-0.5">
-            <img src="/logo.jpg" alt="MBA Academy Logo" className="w-full h-full object-contain rounded-xl" referrerPolicy="no-referrer" />
+          <div className="w-11 h-11 rounded-2xl overflow-hidden bg-white shadow-md ring-2 ring-blue-500/20 group-hover:scale-105 transition-transform flex items-center justify-center p-1.5">
+            {!logoError && academyLogo ? (
+              <img 
+                src={academyLogo} 
+                alt="MBA Academy Logo" 
+                className="w-full h-full object-contain rounded-xl" 
+                referrerPolicy="no-referrer"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <GraduationCap className="w-7 h-7 text-blue-600" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -1976,8 +2049,18 @@ export default function App() {
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-2xl bg-white p-1 shadow-2xl mb-6 flex items-center justify-center">
-                <img src="/logo.jpg" alt="MBA Academy Logo" className="w-full h-full object-contain rounded-xl" referrerPolicy="no-referrer" />
+              <div className="w-20 h-20 rounded-2xl bg-white p-2.5 shadow-2xl mb-6 flex items-center justify-center">
+                {!logoError && academyLogo ? (
+                  <img 
+                    src={academyLogo} 
+                    alt="MBA Academy Logo" 
+                    className="w-full h-full object-contain rounded-xl" 
+                    referrerPolicy="no-referrer"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <GraduationCap className="w-12 h-12 text-blue-600" />
+                )}
               </div>
 
               <div className="bg-amber-400 text-blue-950 px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-md">
@@ -2106,6 +2189,71 @@ export default function App() {
                   Clear Admissions Data
                 </button>
               </div>
+              
+              {/* ACADEMY BRANDING & LOGO SETTINGS */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs text-left">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-blue-200 p-2 flex items-center justify-center shrink-0">
+                    {!logoError && academyLogo ? (
+                      <img 
+                        src={academyLogo} 
+                        alt="Academy Logo Preview" 
+                        className="w-full h-full object-contain rounded-xl" 
+                        onError={() => setLogoError(true)}
+                      />
+                    ) : (
+                      <GraduationCap className="w-10 h-10 text-blue-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-base">Academy Logo Settings</h3>
+                    <p className="text-xs text-slate-600 mt-0.5">Upload a professional logo for MBA Academy. It will instantly update across the Navbar, Footer, and Professional Ad Poster!</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 shrink-0">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    id="academyLogoUpload" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          const base64 = reader.result as string;
+                          localStorage.setItem('tuition_academy_logo_v1', base64);
+                          setAcademyLogo(base64);
+                          setLogoError(false); // Reset error state to try loading new logo
+                          alert('Academy Logo updated successfully!');
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }} 
+                  />
+                  <button 
+                    onClick={() => document.getElementById('academyLogoUpload')?.click()} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>📁</span> Upload Custom Logo
+                  </button>
+                  {academyLogo !== '/logo.jpg' && (
+                    <button 
+                      onClick={() => {
+                        if (confirm('Reset logo to default?')) {
+                          localStorage.removeItem('tuition_academy_logo_v1');
+                          setAcademyLogo('/logo.jpg');
+                          setLogoError(false);
+                        }
+                      }} 
+                      className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-3 py-2.5 rounded-xl text-xs transition cursor-pointer"
+                    >
+                      Reset Default
+                    </button>
+                  )}
+                </div>
+              </div>
 
               <h3 className="font-bold text-slate-800 text-lg mb-4">Submitted Admission Forms ({admissions.length})</h3>
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-10">
@@ -2136,10 +2284,17 @@ export default function App() {
                           <td className="p-4"><span className="text-xs">📞 {adm.phone}</span><br /><span className="text-xs text-slate-500">✉️ {adm.email}</span></td>
                           <td className="p-4 text-xs text-slate-600">{adm.address || 'N/A'}</td>
                           <td className="p-4">
-                            <button onClick={() => {
-                              const updated = admissions.filter(a => a.id !== adm.id);
-                              setAdmissions(updated);
-                              localStorage.setItem('tuition_submitted_admissions_v1', JSON.stringify(updated));
+                            <button onClick={async () => {
+                              if (confirm('Are you sure you want to delete this admission record?')) {
+                                try {
+                                  await supabase.from('admissions').delete().eq('id', adm.id);
+                                } catch (err) {
+                                  console.error("Error deleting from Supabase admissions:", err);
+                                }
+                                const updated = admissions.filter(a => a.id !== adm.id);
+                                setAdmissions(updated);
+                                localStorage.setItem('tuition_submitted_admissions_v1', JSON.stringify(updated));
+                              }
                             }} className="text-red-600 hover:bg-red-50 p-1.5 rounded-lg"><Trash2 size={16} /></button>
                           </td>
                         </tr>
@@ -2182,8 +2337,18 @@ export default function App() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-0.5 flex items-center justify-center">
-                <img src="/logo.jpg" alt="Logo" className="w-full h-full object-contain rounded-md" referrerPolicy="no-referrer" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-1 flex items-center justify-center">
+                {!logoError && academyLogo ? (
+                  <img 
+                    src={academyLogo} 
+                    alt="Logo" 
+                    className="w-full h-full object-contain rounded-md" 
+                    referrerPolicy="no-referrer"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <GraduationCap className="w-5 h-5 text-blue-600" />
+                )}
               </div>
               <b className="text-white text-lg font-bold">MBA Academy</b>
             </div>
