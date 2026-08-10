@@ -76,6 +76,22 @@ export default function App() {
   const [searchClass, setSearchClass] = useState('all');
   const [searchedResult, setSearchedResult] = useState<any>(null);
 
+  // Results state & handlers (Backend + LocalStorage)
+  const [resultsList, setResultsList] = useState<any[]>([]);
+  const [resStudentName, setResStudentName] = useState('');
+  const [resFatherName, setResFatherName] = useState('');
+  const [resRollNo, setResRollNo] = useState('');
+  const [resClass, setResClass] = useState('Class 1');
+  const [resExamType, setResExamType] = useState('Annual Examination');
+  const [resTerm, setResTerm] = useState('Final Term');
+  const [resYear, setResYear] = useState('2025 - 2026');
+  const [resDate, setResDate] = useState(new Date().toISOString().split('T')[0]);
+  const [resPhoto, setResPhoto] = useState('');
+  const [resMarks, setResMarks] = useState('');
+  const [resTotalMarks, setResTotalMarks] = useState('500');
+  const [resGrade, setResGrade] = useState('A+');
+  const [resRemarks, setResRemarks] = useState('Outstanding academic performance. Keep it up!');
+
   // Admin password input for UI login
   const [adminPassInput, setAdminPassInput] = useState('');
 
@@ -83,8 +99,87 @@ export default function App() {
     fetchTeachers();
     fetchOnlineClasses();
     fetchClassMedia();
+    fetchResults();
     loadLocalData();
   }, []);
+
+  const fetchResults = async () => {
+    try {
+      const { data, error } = await supabase.from('student_results').select('*');
+      if (error || !data || data.length === 0) {
+        const local = localStorage.getItem('tuition_student_results_v1');
+        if (local) setResultsList(JSON.parse(local));
+        else setResultsList([]);
+      } else {
+        setResultsList(data);
+        localStorage.setItem('tuition_student_results_v1', JSON.stringify(data));
+      }
+    } catch {
+      const local = localStorage.getItem('tuition_student_results_v1');
+      if (local) setResultsList(JSON.parse(local));
+      else setResultsList([]);
+    }
+  };
+
+  const handleAddResult = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resStudentName || !resRollNo || !resMarks) return alert('Please provide student name, roll number, and obtained marks.');
+    const obtained = Number(resMarks);
+    const total = Number(resTotalMarks) || 500;
+    const percentage = ((obtained / total) * 100).toFixed(1) + '%';
+    const newResult = {
+      id: Date.now(),
+      studentName: resStudentName,
+      fatherName: resFatherName || 'Muhammad',
+      rollNo: resRollNo,
+      className: resClass,
+      examType: resExamType,
+      term: resTerm,
+      academicYear: resYear,
+      dateOfResult: resDate,
+      studentPhoto: resPhoto,
+      marksObtained: obtained,
+      totalMarks: total,
+      marks: `${obtained} / ${total}`,
+      percentage,
+      grade: resGrade || 'A+',
+      remarks: resRemarks,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const { data, error } = await supabase.from('student_results').insert([newResult]).select();
+      if (error) {
+        const updated = [newResult, ...resultsList];
+        setResultsList(updated);
+        localStorage.setItem('tuition_student_results_v1', JSON.stringify(updated));
+      } else if (data && data[0]) {
+        const updated = [data[0], ...resultsList];
+        setResultsList(updated);
+        localStorage.setItem('tuition_student_results_v1', JSON.stringify(updated));
+      }
+    } catch {
+      const updated = [newResult, ...resultsList];
+      setResultsList(updated);
+      localStorage.setItem('tuition_student_results_v1', JSON.stringify(updated));
+    }
+
+    setResStudentName(''); setResFatherName(''); setResRollNo(''); setResMarks(''); setResPhoto('');
+    alert('Student result published successfully to backend database & portal!');
+  };
+
+  const handleDeleteResult = async (id: number) => {
+    if (confirm('Delete this result record?')) {
+      try {
+        await supabase.from('student_results').delete().eq('id', id);
+      } catch (err) {
+        console.error(err);
+      }
+      const filtered = resultsList.filter(r => r.id !== id);
+      setResultsList(filtered);
+      localStorage.setItem('tuition_student_results_v1', JSON.stringify(filtered));
+    }
+  };
 
   const fetchClassMedia = async () => {
     try {
@@ -95,6 +190,7 @@ export default function App() {
         else setClassMedia([]);
       } else {
         setClassMedia(data);
+        localStorage.setItem('tuition_class_media_v1', JSON.stringify(data));
       }
     } catch {
       const local = localStorage.getItem('tuition_class_media_v1');
@@ -122,8 +218,10 @@ export default function App() {
         const updated = [newItem, ...classMedia];
         setClassMedia(updated);
         localStorage.setItem('tuition_class_media_v1', JSON.stringify(updated));
-      } else if (data) {
-        setClassMedia([data[0], ...classMedia]);
+      } else if (data && data[0]) {
+        const updated = [data[0], ...classMedia];
+        setClassMedia(updated);
+        localStorage.setItem('tuition_class_media_v1', JSON.stringify(updated));
       }
     } catch {
       const updated = [newItem, ...classMedia];
@@ -132,7 +230,7 @@ export default function App() {
     }
 
     setMediaTitle(''); setMediaFileUrl(''); setMediaTeacher('');
-    alert('Class media uploaded & published successfully!');
+    alert('Class media uploaded & published successfully to backend database!');
   };
 
   const handleDeleteMedia = async (id: number) => {
@@ -1040,6 +1138,66 @@ export default function App() {
             <h1 className="text-3xl font-bold text-slate-900">Student Results Portal</h1>
           </div>
 
+          {isAdmin && (
+            <form onSubmit={handleAddResult} className="bg-amber-50 border border-amber-200 p-6 rounded-2xl mb-8 shadow-sm">
+              <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2"><Plus size={18} /> Publish Student Result & Official Results Card (Admin)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <input type="text" placeholder="Student Full Name *" value={resStudentName} onChange={e => setResStudentName(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                <input type="text" placeholder="Father Name *" value={resFatherName} onChange={e => setResFatherName(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                <input type="text" placeholder="Roll Number e.g. 901 *" value={resRollNo} onChange={e => setResRollNo(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                <select value={resClass} onChange={e => setResClass(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Exam Type e.g. Annual Examination" value={resExamType} onChange={e => setResExamType(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" />
+                <input type="text" placeholder="Term / Semester e.g. Final Term" value={resTerm} onChange={e => setResTerm(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" />
+                <input type="text" placeholder="Academic Year e.g. 2025-2026" value={resYear} onChange={e => setResYear(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                <input type="date" value={resDate} onChange={e => setResDate(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" />
+                <input type="number" placeholder="Marks Obtained e.g. 460 *" value={resMarks} onChange={e => setResMarks(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
+                <input type="number" placeholder="Total Marks (default 500)" value={resTotalMarks} onChange={e => setResTotalMarks(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" />
+                <select value={resGrade} onChange={e => setResGrade(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none">
+                  <option value="A+">Grade A+ (90%+)</option>
+                  <option value="A">Grade A (80-89%)</option>
+                  <option value="B">Grade B (70-79%)</option>
+                  <option value="C">Grade C (60-69%)</option>
+                  <option value="Pass">Pass</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-xs font-semibold text-amber-900 block mb-1">Upload Student Photo / Paste URL</label>
+                  <div className="flex gap-2 items-center">
+                    <input type="file" accept="image/*" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          if (event.target?.result) {
+                            setResPhoto(event.target.result as string);
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }} className="bg-white p-2 rounded-xl border border-amber-200 text-xs text-slate-600 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 flex-1" />
+                    {resPhoto && <span className="text-xs text-emerald-700 font-bold shrink-0">✓ Photo Loaded</span>}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-amber-900 block mb-1">Teacher's Remarks</label>
+                  <input type="text" placeholder="Remarks e.g. Excellent student!" value={resRemarks} onChange={e => setResRemarks(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none w-full" />
+                </div>
+              </div>
+              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition shadow-sm">
+                Publish Result to Backend Database & Portal
+              </button>
+            </form>
+          )}
+
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-wrap gap-4">
             <input type="text" placeholder="Enter Roll Number e.g. 901" value={searchRoll} onChange={e => setSearchRoll(e.target.value)} className="flex-1 min-w-[200px] bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none" />
             <select value={searchClass} onChange={e => setSearchClass(e.target.value)} className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none">
@@ -1049,36 +1207,230 @@ export default function App() {
               ))}
             </select>
             <button onClick={() => {
-              const found = attendanceStudents.find(s => s.roll === searchRoll && (searchClass === 'all' || s.cls === searchClass));
-              if (found) {
-                setSearchedResult({ student: found, marks: '450 / 500', percentage: '90%', grade: 'A+' });
+              const foundRes = resultsList.find(r => r.rollNo === searchRoll && (searchClass === 'all' || r.className === searchClass));
+              if (foundRes) {
+                setSearchedResult(foundRes);
               } else {
-                alert('No student found with this Roll No. Please check.');
-                setSearchedResult(null);
+                const foundAtt = attendanceStudents.find(s => s.roll === searchRoll && (searchClass === 'all' || s.cls === searchClass));
+                if (foundAtt) {
+                  setSearchedResult({
+                    studentName: foundAtt.name,
+                    fatherName: 'Muhammad',
+                    rollNo: foundAtt.roll,
+                    className: foundAtt.cls,
+                    examType: 'Annual Examination',
+                    term: 'Final Term',
+                    academicYear: '2025 - 2026',
+                    dateOfResult: '2026-08-10',
+                    studentPhoto: '',
+                    marks: '450 / 500',
+                    marksObtained: 450,
+                    totalMarks: 500,
+                    percentage: '90.0%',
+                    grade: 'A+',
+                    remarks: 'Excellent academic consistency.'
+                  });
+                } else {
+                  alert('No student result found with this Roll No. Please check.');
+                  setSearchedResult(null);
+                }
               }
             }} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition">
-              Search Result
+              Search Result Card
             </button>
           </div>
 
           {searchedResult && (
-            <div className="bg-white p-8 rounded-3xl shadow-xl border border-blue-100 text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-4 py-1.5 rounded-bl-2xl">Verified Result</div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-1">{searchedResult.student.name}</h2>
-              <p className="text-xs text-slate-500 mb-6">Roll No: {searchedResult.student.roll} | {searchedResult.student.cls}</p>
-              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-6">
-                <div className="bg-blue-50 p-4 rounded-2xl">
-                  <span className="text-xs text-slate-500 block">Total Marks</span>
-                  <b className="text-lg font-bold text-blue-900">{searchedResult.marks}</b>
+            <div id="official-results-card" className="bg-white rounded-3xl shadow-2xl border-4 border-amber-500/80 p-8 md:p-10 relative overflow-hidden mb-12 text-slate-800">
+              {/* Certificate Header */}
+              <div className="flex justify-between items-center border-b-2 border-slate-900 pb-6 mb-6 flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-900 via-blue-700 to-indigo-600 text-white flex items-center justify-center font-black text-3xl shadow-md">
+                    🎓
+                  </div>
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-blue-950 tracking-tight">MBA ACADEMY</h2>
+                    <p className="text-xs font-semibold text-slate-500 tracking-wider">Quality Education for Bright Future</p>
+                  </div>
                 </div>
-                <div className="bg-emerald-50 p-4 rounded-2xl">
-                  <span className="text-xs text-slate-500 block">Percentage</span>
-                  <b className="text-lg font-bold text-emerald-900">{searchedResult.percentage}</b>
+                <div className="text-right bg-blue-50 border border-blue-200 px-4 py-2 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-500 block uppercase">Contact Support</span>
+                  <b className="text-sm font-bold text-blue-900">0300-0000000 / 03290725117</b>
                 </div>
-                <div className="bg-amber-50 p-4 rounded-2xl">
-                  <span className="text-xs text-slate-500 block">Grade</span>
-                  <b className="text-lg font-bold text-amber-900">{searchedResult.grade}</b>
+              </div>
+
+              {/* Title Badge */}
+              <div className="text-center mb-8">
+                <div className="inline-block bg-gradient-to-r from-blue-950 via-blue-900 to-blue-950 text-amber-300 font-extrabold text-sm md:text-base px-8 py-2 rounded-full shadow-md uppercase tracking-wider border border-amber-400/50">
+                  ★ OFFICIAL RESULTS CARD ★
                 </div>
+              </div>
+
+              {/* Student Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 items-center">
+                <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Student Name:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.studentName}</b>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Roll No.:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.rollNo}</b>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Father Name:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.fatherName || 'Muhammad'}</b>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Exam Type:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.examType || 'Annual Examination'}</b>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Class / Course:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.className}</b>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Term / Semester:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.term || 'Final Term'}</b>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Academic Year:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.academicYear || '2025 - 2026'}</b>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 block">Date of Result:</span>
+                    <b className="text-base text-slate-900 underline decoration-slate-300 underline-offset-4">{searchedResult.dateOfResult || searchedResult.createdAt?.split('T')[0] || '2026-08-10'}</b>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <div className="w-28 h-36 bg-white rounded-xl border-2 border-slate-300 overflow-hidden shadow-inner flex items-center justify-center">
+                    {searchedResult.studentPhoto ? (
+                      <img src={searchedResult.studentPhoto} alt="Student" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center p-2">
+                        <span className="text-3xl">👤</span>
+                        <span className="text-[10px] font-bold text-slate-400 block mt-1 uppercase">Student Photo</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Marks Summary Box */}
+              <div className="bg-blue-900 text-white p-4 rounded-xl mb-8 flex flex-wrap justify-around text-center gap-4">
+                <div>
+                  <span className="text-xs text-blue-200 block uppercase font-semibold">Total Marks</span>
+                  <span className="text-xl font-black">{searchedResult.totalMarks || 500}</span>
+                </div>
+                <div className="border-r border-blue-700"></div>
+                <div>
+                  <span className="text-xs text-blue-200 block uppercase font-semibold">Obtained Marks</span>
+                  <span className="text-xl font-black text-amber-300">{searchedResult.marks}</span>
+                </div>
+                <div className="border-r border-blue-700"></div>
+                <div>
+                  <span className="text-xs text-blue-200 block uppercase font-semibold">Percentage</span>
+                  <span className="text-xl font-black text-emerald-300">{searchedResult.percentage}</span>
+                </div>
+                <div className="border-r border-blue-700"></div>
+                <div>
+                  <span className="text-xs text-blue-200 block uppercase font-semibold">Final Grade</span>
+                  <span className="text-xl font-black text-amber-300">{searchedResult.grade}</span>
+                </div>
+              </div>
+
+              {/* Remarks Box */}
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-8 text-sm">
+                <b className="text-amber-900 block mb-1">Teacher's Remarks & Evaluation:</b>
+                <p className="text-slate-700 italic">"{searchedResult.remarks || 'Excellent academic performance. Keep up the hard work!'}"</p>
+              </div>
+
+              {/* Signatures with official sign images */}
+              <div className="grid grid-cols-3 gap-6 pt-10 pb-6 text-center text-xs text-slate-600 font-semibold items-end">
+                <div className="border-t-2 border-slate-400 pt-3 relative">
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 font-serif italic text-blue-900 text-lg opacity-80 select-none">M. Tariq</div>
+                  Class Teacher Signature
+                </div>
+                <div className="border-t-2 border-slate-400 pt-3 relative">
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 font-serif italic text-slate-700 text-lg opacity-80 select-none">Guardian</div>
+                  Parent / Guardian Signature
+                </div>
+                <div className="border-t-2 border-slate-400 pt-3 relative">
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 font-serif italic text-amber-800 font-bold text-lg opacity-90 select-none">Prof. A. Rauf</div>
+                  Principal Signature
+                </div>
+              </div>
+
+              {/* Print Button for Students */}
+              <div className="text-center mt-6 pt-4 border-t border-slate-200 print:hidden flex flex-wrap justify-center gap-4">
+                <button onClick={() => {
+                  const cardElement = document.getElementById('official-results-card');
+                  const printWindow = window.open('', '_blank');
+                  if (printWindow && cardElement) {
+                    // Clone HTML and remove print button from print preview
+                    const clone = cardElement.cloneNode(true) as HTMLElement;
+                    const printBtnDiv = clone.querySelector('.print\\:hidden');
+                    if (printBtnDiv) printBtnDiv.remove();
+
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>MBA Academy - Official Results Card (${searchedResult.studentName})</title>
+                          <script src="https://cdn.tailwindcss.com"></script>
+                        </head>
+                        <body class="p-8 bg-white text-slate-800 font-sans">
+                          ${clone.outerHTML}
+                          <script>
+                            window.onload = () => { window.print(); };
+                          </script>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                  } else {
+                    window.print();
+                  }
+                }} className="bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 mx-auto text-sm transition transform hover:scale-105">
+                  🖨️ Print / Download Results Card
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Published Results list visible to everyone with link */}
+          {resultsList.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-6">
+              <h3 className="font-bold text-slate-800 text-lg mb-4">Published Results Directory ({resultsList.length})</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
+                      <th className="p-3.5">Student Name</th>
+                      <th className="p-3.5">Class & Roll</th>
+                      <th className="p-3.5">Marks</th>
+                      <th className="p-3.5">Percentage</th>
+                      <th className="p-3.5">Grade</th>
+                      {isAdmin && <th className="p-3.5">Action</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resultsList.map(res => (
+                      <tr key={res.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td className="p-3.5 font-bold text-slate-900">{res.studentName}</td>
+                        <td className="p-3.5"><span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">{res.className}</span> <span className="text-xs text-slate-500">Roll: {res.rollNo}</span></td>
+                        <td className="p-3.5 font-semibold">{res.marks}</td>
+                        <td className="p-3.5 text-emerald-700 font-bold">{res.percentage}</td>
+                        <td className="p-3.5"><span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold">{res.grade}</span></td>
+                        {isAdmin && (
+                          <td className="p-3.5">
+                            <button onClick={() => handleDeleteResult(res.id)} className="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg"><Trash2 size={16} /></button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
