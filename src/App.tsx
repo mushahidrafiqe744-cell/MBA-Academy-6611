@@ -2134,6 +2134,18 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Button */}
+      <a 
+        href="https://wa.me/923290725117" 
+        target="_blank" 
+        rel="noreferrer" 
+        className="fixed bottom-6 right-6 z-50 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition hover:scale-110 border-2 border-white"
+        title="Chat on WhatsApp: 03290725117"
+      >
+        <span className="text-2xl">💬</span>
+        <span className="hidden md:inline text-xs font-bold pr-1">WhatsApp 03290725117</span>
+      </a>
     </div>
   );
 }
