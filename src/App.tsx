@@ -8,8 +8,10 @@ import { supabase } from './lib/supabase';
 import { 
   GraduationCap, BookOpen, Users, Award, Calendar, CheckCircle, 
   Phone, MapPin, Clock, MessageSquare, Menu, X, Lock, Unlock, 
-  Search, Trash2, Plus, Video, Image as ImageIcon, ShieldCheck, ExternalLink, UserCheck
+  Search, Trash2, Plus, Video, Image as ImageIcon, ShieldCheck, ExternalLink, UserCheck,
+  Monitor, Terminal, Cpu, Laptop, Shield
 } from 'lucide-react';
+import ComputerSection from './components/ComputerSection';
 
 const ADMIN_PASS = 'King6611';
 
@@ -17,6 +19,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('ta_admin') === '1');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedSectionFilter, setSelectedSectionFilter] = useState('all');
 
   // Data states
   const [academyLogo, setAcademyLogo] = useState<string>(() => {
@@ -51,6 +54,10 @@ export default function App() {
   const [tSubject, setTSubject] = useState('');
   const [tQual, setTQual] = useState('');
   const [tImg, setTImg] = useState('');
+  const [tSection, setTSection] = useState('Senior Section');
+  const [tDate, setTDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
 
   // Class Media / Video / Audio / Image state & handlers
   const [classMedia, setClassMedia] = useState<any[]>([]);
@@ -72,6 +79,7 @@ export default function App() {
   const [onlineLink, setOnlineLink] = useState('');
   const [onlineClassImg, setOnlineClassImg] = useState('');
   const [onlineTeacherImg, setOnlineTeacherImg] = useState('');
+  const [onlineSection, setOnlineSection] = useState('Section A');
 
   // Admin add upcoming live class form
   const [upcomingClasses, setUpcomingClasses] = useState<any[]>([]);
@@ -562,28 +570,61 @@ export default function App() {
     }
   };
 
+  // Helper to parse teacher's qualification and section
+  const parseTeacherQual = (qualStr: string) => {
+    if (!qualStr) return { qual: '', section: '' };
+    const match = qualStr.match(/(.*)\s*\[Section:\s*(.*)\]/);
+    if (match) {
+      return { qual: match[1].trim(), section: match[2].trim() };
+    }
+    return { qual: qualStr, section: '' };
+  };
+
+  // Helper to parse online class title and section
+  const parseOnlineTitle = (titleStr: string) => {
+    if (!titleStr) return { title: '', section: '' };
+    const match = titleStr.match(/(.*)\s*\[Section:\s*(.*)\]/);
+    if (match) {
+      return { title: match[1].trim(), section: match[2].trim() };
+    }
+    return { title: titleStr, section: '' };
+  };
+
   // Add Teacher
   const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tName || !tSubject || !tQual) return alert('Please fill required fields');
-    const newT = { name: tName, subject: tSubject, qual: tQual, img: tImg || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80' };
+    
+    const fullQual = tSection && tSection !== 'None' ? `${tQual} [Section: ${tSection}]` : tQual;
+    const customDateIso = tDate ? new Date(tDate + 'T12:00:00Z').toISOString() : new Date().toISOString();
+    
+    const newT = { 
+      name: tName, 
+      subject: tSubject, 
+      qual: fullQual, 
+      img: tImg || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80',
+      created_at: customDateIso
+    };
     
     try {
       const { data, error } = await supabase.from('teachers').insert([newT]).select();
       if (error) {
+        console.error("Supabase teacher insert error:", error);
         const updated = [...teachers, { ...newT, id: Date.now() }];
         setTeachers(updated);
         localStorage.setItem('ta_teachers', JSON.stringify(updated));
       } else if (data) {
         setTeachers([...teachers, data[0]]);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       const updated = [...teachers, { ...newT, id: Date.now() }];
       setTeachers(updated);
       localStorage.setItem('ta_teachers', JSON.stringify(updated));
     }
 
     setTName(''); setTSubject(''); setTQual(''); setTImg('');
+    setTDate(new Date().toISOString().split('T')[0]);
     alert('Teacher added successfully!');
   };
 
@@ -604,8 +645,11 @@ export default function App() {
   const handleAddOnlineClass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onlineTitle || !onlineTeacher || !onlineTime || !onlineLink) return alert('Fill all fields');
+    
+    const fullTitle = onlineSection && onlineSection !== 'None' ? `${onlineTitle} [Section: ${onlineSection}]` : onlineTitle;
+    
     const newC = { 
-      title: onlineTitle, 
+      title: fullTitle, 
       teacher: onlineTeacher, 
       time: onlineTime, 
       date: onlineDate || new Date().toISOString().split('T')[0],
@@ -828,9 +872,9 @@ export default function App() {
           <li><button onClick={() => setCurrentPage('about')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'about' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>About Us</button></li>
           <li><button onClick={() => setCurrentPage('teachers')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'teachers' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Teachers</button></li>
           <li><button onClick={() => { setCurrentPage('attendance'); setSelectedClassForAttendance(null); }} className={`px-3 py-2 rounded-lg transition ${currentPage === 'attendance' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Attendance</button></li>
-          <li><button onClick={() => setCurrentPage('ramadan')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'ramadan' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>🌙 Rozay</button></li>
           <li><button onClick={() => setCurrentPage('admission')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'admission' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Admission</button></li>
           <li><button onClick={() => setCurrentPage('online')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'online' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Online Classes</button></li>
+          <li><button onClick={() => setCurrentPage('computer')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'computer' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'}`}>💻 Computer</button></li>
           <li><button onClick={() => setCurrentPage('results')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'results' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Results</button></li>
           <li><button onClick={() => setCurrentPage('gallery')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
           <li><button onClick={() => setCurrentPage('contact')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
@@ -838,6 +882,29 @@ export default function App() {
         </ul>
 
         <div className="flex items-center gap-3">
+          {/* Section Selector */}
+          <div className="hidden sm:flex items-center gap-1.5 bg-blue-50/80 border border-blue-100 px-3 py-1.5 rounded-full text-xs font-semibold text-blue-900 shadow-2xs">
+            <span className="text-[11px] uppercase tracking-wide font-extrabold text-blue-600">🏫 Sec:</span>
+            <select 
+              value={selectedSectionFilter} 
+              onChange={e => {
+                setSelectedSectionFilter(e.target.value);
+                if (currentPage !== 'teachers' && currentPage !== 'online') {
+                  setCurrentPage('teachers');
+                }
+              }} 
+              className="bg-transparent font-bold text-blue-800 outline-none cursor-pointer text-xs pr-1"
+            >
+              <option value="all">All Sections</option>
+              <option value="Primary Section">Primary</option>
+              <option value="Middle Section">Middle</option>
+              <option value="High Section">High</option>
+              <option value="Senior Section">Senior</option>
+              <option value="Computer Class">Computer Class</option>
+              <option value="Ladies Section">Ladies</option>
+            </select>
+          </div>
+
           <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition" title="WhatsApp Chat">
             W
           </a>
@@ -852,12 +919,38 @@ export default function App() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-2 shadow-lg">
-          {['home', 'ad', 'about', 'teachers', 'attendance', 'ramadan', 'admission', 'online', 'results', 'gallery', 'contact', 'records'].map(p => (
-            <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-              {p === 'ad' ? '📢 Professional Admission Ad' : p === 'ramadan' ? '🌙 Rozay Attendance' : p === 'records' ? '🔒 Records Dashboard' : p}
-            </button>
-          ))}
+        <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-3 shadow-lg">
+          {/* Section Selector in Mobile */}
+          <div className="flex items-center justify-between bg-blue-50/80 border border-blue-100 px-4 py-2.5 rounded-xl text-xs font-semibold text-blue-900">
+            <span className="text-[11px] uppercase tracking-wide font-extrabold text-blue-600">🏫 Filter Section:</span>
+            <select 
+              value={selectedSectionFilter} 
+              onChange={e => {
+                setSelectedSectionFilter(e.target.value);
+                setMobileMenuOpen(false);
+                if (currentPage !== 'teachers' && currentPage !== 'online') {
+                  setCurrentPage('teachers');
+                }
+              }} 
+              className="bg-transparent font-bold text-blue-800 outline-none cursor-pointer text-xs"
+            >
+              <option value="all">All Sections</option>
+              <option value="Primary Section">Primary Section</option>
+              <option value="Middle Section">Middle Section</option>
+              <option value="High Section">High Section</option>
+              <option value="Senior Section">Senior Section</option>
+              <option value="Computer Class">Computer Class</option>
+              <option value="Ladies Section">Ladies Section</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'].map(p => (
+              <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
+                {p === 'ad' ? '📢 Professional Admission Ad' : p === 'records' ? '🔒 Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -966,6 +1059,24 @@ export default function App() {
                 <input type="text" placeholder="Subject *" value={tSubject} onChange={e => setTSubject(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
                 <input type="text" placeholder="Qualification & Exp *" value={tQual} onChange={e => setTQual(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-amber-200 text-sm">
+                  <span className="text-slate-500 text-xs font-semibold whitespace-nowrap">Section:</span>
+                  <select value={tSection} onChange={e => setTSection(e.target.value)} className="w-full bg-transparent outline-none cursor-pointer text-xs">
+                    <option value="Primary Section">Primary Section (Class 1-5)</option>
+                    <option value="Middle Section">Middle Section (Class 6-8)</option>
+                    <option value="High Section">High Section (Class 9-10)</option>
+                    <option value="Senior Section">Senior Section</option>
+                    <option value="Computer Class">Computer Class Section</option>
+                    <option value="Ladies Section">Ladies Section</option>
+                    <option value="None">None (General)</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-amber-200 text-sm">
+                  <span className="text-slate-500 text-xs font-semibold whitespace-nowrap">Joining/Record Date:</span>
+                  <input type="date" value={tDate} onChange={e => setTDate(e.target.value)} className="w-full bg-transparent outline-none cursor-pointer text-xs" required />
+                </div>
+              </div>
               <div className="flex items-center gap-3 mb-3 bg-white p-3 rounded-xl border border-amber-200">
                 <div className="w-12 h-12 rounded-lg bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-500">
                   {tImg ? <img src={tImg} alt="" className="w-full h-full object-cover" /> : '👤'}
@@ -986,22 +1097,63 @@ export default function App() {
             </form>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {teachers.map(t => (
-              <div key={t.id} className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 transition hover:-translate-y-1">
-                <img src={t.img} alt={t.name} className="w-full h-56 object-cover bg-slate-200" />
-                <div className="p-6">
-                  <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-semibold">{t.subject}</span>
-                  <h3 className="text-lg font-bold text-slate-900 mt-2 mb-1">{t.name}</h3>
-                  <p className="text-xs text-slate-500 mb-4">{t.qual}</p>
-                  {isAdmin && (
-                    <button onClick={() => handleDeleteTeacher(t.id)} className="bg-red-50 text-red-600 hover:bg-red-100 font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5">
-                      <Trash2 size={14} /> Delete Teacher
-                    </button>
-                  )}
-                </div>
+          {selectedSectionFilter !== 'all' && (
+            <div className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between text-blue-800 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🏫</span>
+                <span>Showing teachers in <b>{selectedSectionFilter}</b> only.</span>
               </div>
-            ))}
+              <button onClick={() => setSelectedSectionFilter('all')} className="bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 font-bold text-xs px-3 py-1.5 rounded-lg transition">
+                Show All Sections
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {(() => {
+              const filteredTeachers = teachers.filter(t => {
+                if (selectedSectionFilter === 'all') return true;
+                const { section } = parseTeacherQual(t.qual);
+                return section === selectedSectionFilter;
+              });
+
+              if (filteredTeachers.length === 0) {
+                return (
+                  <div className="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-200 text-slate-500">
+                    <div className="text-4xl mb-2">👤</div>
+                    <p className="text-sm font-medium">No teachers found in {selectedSectionFilter} right now.</p>
+                  </div>
+                );
+              }
+
+              return filteredTeachers.map(t => {
+                const { qual, section } = parseTeacherQual(t.qual);
+                const formattedDate = t.created_at ? new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                return (
+                  <div key={t.id} className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 transition hover:-translate-y-1">
+                    <img src={t.img} alt={t.name} className="w-full h-56 object-cover bg-slate-200" />
+                    <div className="p-6">
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">{t.subject}</span>
+                        {section && (
+                          <span className="bg-purple-50 text-purple-600 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">Sec: {section}</span>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 mt-2 mb-1">{t.name}</h3>
+                      <p className="text-xs text-slate-500 mb-3">{qual}</p>
+                      {formattedDate && (
+                        <p className="text-[10px] text-slate-400 font-medium mb-4">📅 Joined: {formattedDate}</p>
+                      )}
+                      {isAdmin && (
+                        <button onClick={() => handleDeleteTeacher(t.id)} className="bg-red-50 text-red-600 hover:bg-red-100 font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5 mt-2">
+                          <Trash2 size={14} /> Delete Teacher
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       )}
@@ -1103,81 +1255,7 @@ export default function App() {
         </div>
       )}
 
-      {/* PAGE: RAMADAN ROZAY ATTENDANCE */}
-      {currentPage === 'ramadan' && (
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="mb-8">
-            <span className="bg-amber-50 text-amber-700 px-3.5 py-1.5 rounded-full text-xs font-semibold inline-block mb-2">Ramadan Special</span>
-            <h1 className="text-3xl font-bold text-slate-900">🌙 Rozay Attendance Portal</h1>
-            <p className="text-slate-600 text-sm mt-1">Track daily roza status of students for spiritual encouragement.</p>
-          </div>
 
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center">
-            <div className="flex-1 min-w-[220px]">
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Select Ramadan Day</label>
-              <select value={ramadanDay} onChange={e => setRamadanDay(e.target.value)} className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none">
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <option key={i + 1} value={`Ramadan_${i + 1}`}>{i + 1} Ramadan</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[220px]">
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Filter by Class</label>
-              <select value={ramadanClassFilter} onChange={e => setRamadanClassFilter(e.target.value)} className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none">
-                <option value="all">All Classes</option>
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
-                  <th className="p-4">Roll No</th>
-                  <th className="p-4">Student Name</th>
-                  <th className="p-4">Class</th>
-                  <th className="p-4">Roza Status</th>
-                  <th className="p-4">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendanceStudents.filter(s => ramadanClassFilter === 'all' || s.cls === ramadanClassFilter).length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-10 text-slate-500 text-sm">No students found. Please add students via Admission or Attendance.</td>
-                  </tr>
-                ) : (
-                  attendanceStudents.filter(s => ramadanClassFilter === 'all' || s.cls === ramadanClassFilter).map(student => {
-                    const dayRecord = ramadanRecords[ramadanDay] || {};
-                    const status = dayRecord[student.id] || 'Roza Kept';
-                    const isKept = status === 'Roza Kept';
-
-                    return (
-                      <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                        <td className="p-4 font-bold text-slate-800">{student.roll}</td>
-                        <td className="p-4 font-medium text-slate-900">{student.name}</td>
-                        <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-xs font-semibold">{student.cls}</span></td>
-                        <td className="p-4">
-                          <span className={`font-semibold px-3 py-1 rounded-full text-xs ${isKept ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                            {status}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <button onClick={() => toggleRamadanStatus(student.id)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${isKept ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
-                            {isKept ? 'Mark Missed' : 'Mark Roza Kept'}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* PAGE: ADMISSION */}
       {currentPage === 'admission' && (
@@ -1278,6 +1356,18 @@ export default function App() {
             </div>
           </div>
 
+          {selectedSectionFilter !== 'all' && (
+            <div className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between text-blue-800 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🏫</span>
+                <span>Showing online classes in <b>{selectedSectionFilter}</b> only.</span>
+              </div>
+              <button onClick={() => setSelectedSectionFilter('all')} className="bg-white border border-blue-200 text-blue-700 hover:bg-blue-100 font-bold text-xs px-3 py-1.5 rounded-lg transition">
+                Show All Sections
+              </button>
+            </div>
+          )}
+
           {isAdmin && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
               <form onSubmit={handleAddOnlineClass} className="bg-amber-50 border border-amber-200 p-6 rounded-2xl shadow-sm">
@@ -1289,6 +1379,20 @@ export default function App() {
                   <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-amber-200 text-sm">
                     <span className="text-slate-500 text-xs font-semibold whitespace-nowrap">Class Date:</span>
                     <input type="date" value={onlineDate} onChange={e => setOnlineDate(e.target.value)} className="w-full bg-transparent outline-none cursor-pointer" required />
+                  </div>
+                  <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-amber-200 text-sm">
+                    <span className="text-slate-500 text-xs font-semibold whitespace-nowrap">Class Section:</span>
+                    <select value={onlineSection} onChange={e => setOnlineSection(e.target.value)} className="w-full bg-transparent outline-none cursor-pointer text-xs">
+                      <option value="Section A">Section A</option>
+                      <option value="Section B">Section B</option>
+                      <option value="Section C">Section C</option>
+                      <option value="Primary Section">Primary Section</option>
+                      <option value="Middle Section">Middle Section</option>
+                      <option value="High Section">High Section</option>
+                      <option value="Computer Class">Computer Class Section</option>
+                      <option value="Ladies Section">Ladies Section</option>
+                      <option value="None">None (General)</option>
+                    </select>
                   </div>
                   <input type="text" placeholder="Zoom / Video Meeting Link (URL)" value={onlineLink} onChange={e => setOnlineLink(e.target.value)} className="bg-white p-3 rounded-xl border border-amber-200 text-sm outline-none" required />
                   
@@ -1383,13 +1487,23 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingClasses.length === 0 ? (
-                <div className="col-span-full text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400">
-                  <div className="text-3xl mb-2">🗓️</div>
-                  <p className="text-xs font-medium">No upcoming sessions scheduled right now.</p>
-                </div>
-              ) : (
-                upcomingClasses.map(c => (
+              {(() => {
+                const filteredUpcoming = upcomingClasses.filter(c => {
+                  if (selectedSectionFilter === 'all') return true;
+                  const { section } = parseOnlineTitle(c.title);
+                  return section === selectedSectionFilter;
+                });
+
+                if (filteredUpcoming.length === 0) {
+                  return (
+                    <div className="col-span-full text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400">
+                      <div className="text-3xl mb-2">🗓️</div>
+                      <p className="text-xs font-medium">No upcoming sessions scheduled for {selectedSectionFilter} right now.</p>
+                    </div>
+                  );
+                }
+
+                return filteredUpcoming.map(c => (
                   <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-md border border-indigo-100 flex flex-col justify-between hover:shadow-xl transition duration-300">
                     <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: c.classImg ? `url(${c.classImg}) center/cover no-repeat` : 'linear-gradient(to bottom right, #312e81, #1e1b4b, #0f172a)' }}>
                       {c.classImg && <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>}
@@ -1416,7 +1530,17 @@ export default function App() {
 
                     <div className="p-6 flex-1 flex flex-col justify-between">
                       <div>
-                        <h3 className="text-lg font-extrabold text-slate-900 mb-3 line-clamp-2">{c.title}</h3>
+                        {(() => {
+                          const { title, section } = parseOnlineTitle(c.title);
+                          return (
+                            <div className="mb-3">
+                              <h3 className="text-lg font-extrabold text-slate-900 line-clamp-2">{title}</h3>
+                              {section && (
+                                <span className="inline-block bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[10px] font-bold mt-1">Section: {section}</span>
+                              )}
+                            </div>
+                          );
+                        })()}
                         <div className="space-y-1.5 mb-6 text-xs text-slate-600">
                           <div className="flex items-center gap-2">
                             <span className="text-slate-400">📅</span>
@@ -1452,8 +1576,8 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
           </div>
 
@@ -1469,13 +1593,23 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {onlineClasses.length === 0 ? (
-              <div className="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-200 text-slate-500">
-                <div className="text-4xl mb-2">📹</div>
-                <p className="text-sm font-medium">No active online classes right now.</p>
-              </div>
-            ) : (
-              onlineClasses.map(c => (
+            {(() => {
+              const filteredOnline = onlineClasses.filter(c => {
+                if (selectedSectionFilter === 'all') return true;
+                const { section } = parseOnlineTitle(c.title);
+                return section === selectedSectionFilter;
+              });
+
+              if (filteredOnline.length === 0) {
+                return (
+                  <div className="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-200 text-slate-500">
+                    <div className="text-4xl mb-2">📹</div>
+                    <p className="text-sm font-medium">No active online classes right now for {selectedSectionFilter}.</p>
+                  </div>
+                );
+              }
+
+              return filteredOnline.map(c => (
                 <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-200 flex flex-col justify-between hover:shadow-xl transition duration-300">
                   {/* Top Banner with Class Image */}
                   <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: c.classImg ? `url(${c.classImg}) center/cover no-repeat` : 'linear-gradient(to bottom right, #0f172a, #1e1b4b, #172554)' }}>
@@ -1505,7 +1639,17 @@ export default function App() {
                   {/* Body Content */}
                   <div className="p-6 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="text-lg font-extrabold text-slate-900 mb-3 line-clamp-2">{c.title}</h3>
+                      {(() => {
+                        const { title, section } = parseOnlineTitle(c.title);
+                        return (
+                          <div className="mb-3">
+                            <h3 className="text-lg font-extrabold text-slate-900 line-clamp-2">{title}</h3>
+                            {section && (
+                              <span className="inline-block bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[10px] font-bold mt-1">Section: {section}</span>
+                            )}
+                          </div>
+                        );
+                      })()}
                       
                       <div className="space-y-1.5 mb-6 text-xs text-slate-600">
                         <div className="flex items-center gap-2">
@@ -1561,8 +1705,8 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-              ))
-            )}
+              ));
+            })()}
           </div>
         </div>
       )}
@@ -2049,6 +2193,19 @@ export default function App() {
         </div>
       )}
 
+      {/* PAGE: COMPUTER CLASS SECTION */}
+      {currentPage === 'computer' && (
+        <ComputerSection 
+          isAdmin={isAdmin}
+          teachers={teachers}
+          onlineClasses={onlineClasses}
+          parseTeacherQual={parseTeacherQual}
+          parseOnlineTitle={parseOnlineTitle}
+          handleDeleteTeacher={handleDeleteTeacher}
+          setCurrentPage={setCurrentPage}
+        />
+      )}
+
       {/* PAGE: ADMIN RECORDS */}
       {currentPage === 'records' && (
         <div className="max-w-6xl mx-auto px-6 py-16">
@@ -2297,7 +2454,6 @@ export default function App() {
             <button onClick={() => setCurrentPage('admission')} className="text-xs block mb-2 hover:text-white transition">Admissions</button>
             <button onClick={() => { setCurrentPage('attendance'); setSelectedClassForAttendance(null); }} className="text-xs block mb-2 hover:text-white transition">Attendance</button>
             <button onClick={() => setCurrentPage('online')} className="text-xs block mb-2 hover:text-white transition">Online Classes</button>
-            <button onClick={() => setCurrentPage('ramadan')} className="text-xs block mb-2 hover:text-white transition">Rozay Tracker</button>
           </div>
           <div>
             <b className="text-white text-sm block mb-3">Contact Info</b>
