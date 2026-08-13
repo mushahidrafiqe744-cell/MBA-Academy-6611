@@ -605,14 +605,14 @@ export default function App() {
       alert('Admin logged out successfully');
       setCurrentPage('home');
     } else {
-      const p = prompt("Enter Admin Password (Password hint: King6611):", "King6611");
+      const p = prompt("Enter Admin Password:");
       if (p === adminPassword || p === 'admin' || p === 'King6611') {
         setIsAdmin(true);
         localStorage.setItem('ta_admin', '1');
         setCurrentPage('records');
         alert('Admin Access Granted! Opening Admin Dashboard.');
       } else if (p !== null) {
-        alert(`Incorrect password! Correct password is: ${adminPassword}`);
+        alert('Incorrect password!');
       }
     }
   };
@@ -2324,7 +2324,7 @@ export default function App() {
                   Login Admin Dashboard
                 </button>
                 <button onClick={() => {
-                  const pass = prompt('Enter Admin Password (Password hint: King6611):', 'King6611');
+                  const pass = prompt('Enter Admin Password:');
                   if (pass === adminPassword || pass === 'admin' || pass === 'King6611') {
                     setIsAdmin(true);
                     localStorage.setItem('ta_admin', '1');
