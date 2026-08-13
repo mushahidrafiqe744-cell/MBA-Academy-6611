@@ -121,6 +121,53 @@ export default function App() {
 
   // Admin password input for UI login
   const [adminPassInput, setAdminPassInput] = useState('');
+  const [adminPassword, setAdminPassword] = useState(() => {
+    return localStorage.getItem('tuition_admin_password_v1') || 'King6611';
+  });
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+
+  // App lock gate password state & functions (Personal Lock)
+  const [appGatePassword, setAppGatePassword] = useState(() => {
+    return localStorage.getItem('app_gate_password_v1') || 'Mushahid123';
+  });
+  const [appGateInput, setAppGateInput] = useState('');
+  const [appUnlocked, setAppUnlocked] = useState(() => {
+    return localStorage.getItem('app_gate_unlocked_v1') === 'true';
+  });
+  const [gateError, setGateError] = useState('');
+  const [showGatePassword, setShowGatePassword] = useState(false);
+  const [gateNewPasswordInput, setGateNewPasswordInput] = useState('');
+
+  const handleVerifyGate = () => {
+    if (appGateInput === appGatePassword || appGateInput === adminPassword || appGateInput === 'King6611') {
+      setAppUnlocked(true);
+      localStorage.setItem('app_gate_unlocked_v1', 'true');
+      setIsAdmin(true);
+      localStorage.setItem('ta_admin', '1');
+      setAppGateInput('');
+      setGateError('');
+      alert('Admin Login Successful! Portal Unlocked.');
+    } else {
+      setGateError('Incorrect Admin Password. Students should click "Open as Student" below.');
+    }
+  };
+
+  const handleStudentOpen = () => {
+    setAppUnlocked(true);
+    localStorage.setItem('app_gate_unlocked_v1', 'true');
+    setIsAdmin(false);
+    localStorage.setItem('ta_admin', '0');
+    setAppGateInput('');
+    setGateError('');
+  };
+
+  const handleLockGate = () => {
+    setAppUnlocked(false);
+    localStorage.setItem('app_gate_unlocked_v1', 'false');
+    setIsAdmin(false);
+    localStorage.setItem('ta_admin', '0');
+    alert('Portal Locked successfully!');
+  };
 
   useEffect(() => {
     fetchTeachers();
@@ -558,14 +605,14 @@ export default function App() {
       alert('Admin logged out successfully');
       setCurrentPage('home');
     } else {
-      const p = prompt('Enter Admin Password (Password hint: King6611):');
-      if (p === ADMIN_PASS || p === 'admin' || p === 'King6611') {
+      const p = prompt(`Enter Admin Password (Password hint: ${adminPassword}):`);
+      if (p === adminPassword || p === 'admin' || p === 'King6611') {
         setIsAdmin(true);
         localStorage.setItem('ta_admin', '1');
         setCurrentPage('records');
         alert('Admin Access Granted! Opening Admin Dashboard.');
       } else if (p !== null) {
-        alert('Incorrect password! Correct password is: King6611');
+        alert(`Incorrect password! Correct password is: ${adminPassword}`);
       }
     }
   };
@@ -838,6 +885,8 @@ export default function App() {
     localStorage.setItem('tuition_ramadan_rozay_v1', JSON.stringify(updated));
   };
 
+
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-600 selection:text-white">
       {/* NAVBAR */}
@@ -878,7 +927,7 @@ export default function App() {
           <li><button onClick={() => setCurrentPage('results')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'results' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Results</button></li>
           <li><button onClick={() => setCurrentPage('gallery')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
           <li><button onClick={() => setCurrentPage('contact')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
-          <li><button onClick={() => setCurrentPage('records')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'records' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>🔒 Records</button></li>
+          <li><button onClick={() => setCurrentPage('records')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'records' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Records</button></li>
         </ul>
 
         <div className="flex items-center gap-3">
@@ -908,9 +957,7 @@ export default function App() {
           <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition" title="WhatsApp Chat">
             W
           </a>
-          <button onClick={toggleAdmin} className={`px-3.5 py-1.5 rounded-full text-xs font-semibold text-white transition shadow-sm ${isAdmin ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-800 hover:bg-blue-900'}`}>
-            {isAdmin ? 'Admin ON (Logout)' : 'Admin Mode'}
-          </button>
+
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-slate-700 p-1">
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -947,9 +994,10 @@ export default function App() {
           <div className="flex flex-col gap-2">
             {['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'].map(p => (
               <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-                {p === 'ad' ? '📢 Professional Admission Ad' : p === 'records' ? '🔒 Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
+                {p === 'ad' ? '📢 Professional Admission Ad' : p === 'records' ? 'Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
               </button>
             ))}
+
           </div>
         </div>
       )}
@@ -975,6 +1023,19 @@ export default function App() {
                 </button>
                 <button onClick={() => setCurrentPage('admission')} className="bg-sky-400 text-white font-semibold px-7 py-3 rounded-full shadow-lg hover:bg-sky-500 transition flex items-center gap-2 text-sm">
                   <GraduationCap size={18} /> Admission Open
+                </button>
+                <button 
+                  onClick={() => {
+                    if (isAdmin) {
+                      setCurrentPage('records');
+                    } else {
+                      toggleAdmin();
+                    }
+                  }} 
+                  className="bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
+                >
+                  {isAdmin ? <Unlock size={18} /> : <Lock size={18} />}
+                  Admin Mode
                 </button>
               </div>
 
@@ -2223,7 +2284,7 @@ export default function App() {
                   onChange={e => setAdminPassInput(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
-                      if (adminPassInput === ADMIN_PASS || adminPassInput === 'admin' || adminPassInput === 'King6611') {
+                      if (adminPassInput === adminPassword || adminPassInput === 'admin' || adminPassInput === 'King6611') {
                         setIsAdmin(true);
                         localStorage.setItem('ta_admin', '1');
                         setAdminPassInput('');
@@ -2236,7 +2297,7 @@ export default function App() {
                   className="p-3 rounded-xl border border-slate-200 text-sm outline-none bg-slate-50 text-center"
                 />
                 <button onClick={() => {
-                  if (adminPassInput === ADMIN_PASS || adminPassInput === 'admin' || adminPassInput === 'King6611') {
+                  if (adminPassInput === adminPassword || adminPassInput === 'admin' || adminPassInput === 'King6611') {
                     setIsAdmin(true);
                     localStorage.setItem('ta_admin', '1');
                     setAdminPassInput('');
@@ -2249,7 +2310,7 @@ export default function App() {
                 </button>
                 <button onClick={() => {
                   const pass = prompt('Enter Admin Password:');
-                  if (pass === ADMIN_PASS || pass === 'admin' || pass === 'King6611') {
+                  if (pass === adminPassword || pass === 'admin' || pass === 'King6611') {
                     setIsAdmin(true);
                     localStorage.setItem('ta_admin', '1');
                     alert('Admin Access Granted!');
@@ -2342,6 +2403,51 @@ export default function App() {
                   )}
                 </div>
               </div>
+
+              {/* ADMIN PASSWORD SETTINGS */}
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 mb-8 shadow-xs text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-rose-50 rounded-2xl text-rose-600 shrink-0">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-base">Change Admin Password</h3>
+                      <p className="text-xs text-slate-600 mt-0.5">Secure your admin portal by updating your default password.</p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 self-start sm:self-auto">
+                    Current Password: <span className="font-mono bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-800">{adminPassword}</span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                  <input 
+                    type="text"
+                    placeholder="Enter New Password"
+                    value={newPasswordInput}
+                    onChange={e => setNewPasswordInput(e.target.value)}
+                    className="p-3 rounded-xl border border-slate-200 text-xs outline-none bg-slate-50 w-full sm:w-64 font-mono text-slate-800"
+                  />
+                  <button 
+                    onClick={() => {
+                      if (!newPasswordInput.trim()) {
+                        alert('Please enter a valid password.');
+                        return;
+                      }
+                      localStorage.setItem('tuition_admin_password_v1', newPasswordInput.trim());
+                      setAdminPassword(newPasswordInput.trim());
+                      setNewPasswordInput('');
+                      alert('Admin Password updated successfully to: ' + newPasswordInput.trim());
+                    }}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-3 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center"
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </div>
+
+
 
               <h3 className="font-bold text-slate-800 text-lg mb-4">Submitted Admission Forms ({admissions.length})</h3>
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-10">
