@@ -605,7 +605,7 @@ export default function App() {
       alert('Admin logged out successfully');
       setCurrentPage('home');
     } else {
-      const p = prompt(`Enter Admin Password (Password hint: ${adminPassword}):`);
+      const p = prompt("Enter Admin Password (Password hint: King6611):", "King6611");
       if (p === adminPassword || p === 'admin' || p === 'King6611') {
         setIsAdmin(true);
         localStorage.setItem('ta_admin', '1');
@@ -2324,7 +2324,7 @@ export default function App() {
                   Login Admin Dashboard
                 </button>
                 <button onClick={() => {
-                  const pass = prompt('Enter Admin Password:');
+                  const pass = prompt('Enter Admin Password (Password hint: King6611):', 'King6611');
                   if (pass === adminPassword || pass === 'admin' || pass === 'King6611') {
                     setIsAdmin(true);
                     localStorage.setItem('ta_admin', '1');
