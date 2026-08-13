@@ -1024,19 +1024,34 @@ export default function App() {
                 <button onClick={() => setCurrentPage('admission')} className="bg-sky-400 text-white font-semibold px-7 py-3 rounded-full shadow-lg hover:bg-sky-500 transition flex items-center gap-2 text-sm">
                   <GraduationCap size={18} /> Admission Open
                 </button>
-                <button 
-                  onClick={() => {
-                    if (isAdmin) {
-                      setCurrentPage('records');
-                    } else {
-                      toggleAdmin();
-                    }
-                  }} 
-                  className="bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
-                >
-                  {isAdmin ? <Unlock size={18} /> : <Lock size={18} />}
-                  Admin Mode
-                </button>
+                {isAdmin ? (
+                  <>
+                    <button 
+                      onClick={() => setCurrentPage('records')} 
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                      <Unlock size={18} /> Admin Dashboard
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsAdmin(false);
+                        localStorage.removeItem('ta_admin');
+                        alert('Admin logged out successfully');
+                        setCurrentPage('home');
+                      }} 
+                      className="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                      <Lock size={18} /> Logout Admin
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={toggleAdmin} 
+                    className="bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <Lock size={18} /> Admin Mode
+                  </button>
+                )}
               </div>
 
               {/* Stats */}
