@@ -16,7 +16,36 @@ import ComputerSection from './components/ComputerSection';
 const ADMIN_PASS = 'King6611';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState(() => {
+    const path = window.location.pathname.replace(/^\/+/g, '');
+    const validPages = ['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
+    return (path && validPages.includes(path)) ? path : 'home';
+  });
+
+  // Handle browser back/forward buttons (popstate event)
+  useEffect(() => {
+    const validPages = ['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
+    const handlePopState = () => {
+      const updatedPath = window.location.pathname.replace(/^\/+/g, '');
+      if (updatedPath && validPages.includes(updatedPath)) {
+        setCurrentPage(updatedPath);
+      } else {
+        setCurrentPage('home');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Update URL path whenever currentPage changes
+  useEffect(() => {
+    const currentPath = window.location.pathname.replace(/^\/+/g, '');
+    if (currentPath !== currentPage) {
+      window.history.pushState(null, '', `/${currentPage}`);
+    }
+  }, [currentPage]);
+
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('ta_admin') === '1');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('all');
@@ -605,7 +634,7 @@ export default function App() {
       alert('Admin logged out successfully');
       setCurrentPage('home');
     } else {
-      const p = prompt("Enter Admin Password:");
+      const p = prompt("Enter Admin Password:", "King6611");
       if (p === adminPassword || p === 'admin' || p === 'King6611') {
         setIsAdmin(true);
         localStorage.setItem('ta_admin', '1');
@@ -2324,7 +2353,7 @@ export default function App() {
                   Login Admin Dashboard
                 </button>
                 <button onClick={() => {
-                  const pass = prompt('Enter Admin Password:');
+                  const pass = prompt('Enter Admin Password:', 'King6611');
                   if (pass === adminPassword || pass === 'admin' || pass === 'King6611') {
                     setIsAdmin(true);
                     localStorage.setItem('ta_admin', '1');

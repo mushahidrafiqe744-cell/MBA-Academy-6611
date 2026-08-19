@@ -167,6 +167,30 @@ export default function ComputerSection({
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
+      {/* 🔴 Live Google Meet Class Action Banner */}
+      <div className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 rounded-3xl p-5 md:p-6 text-white flex flex-col md:flex-row items-center justify-between gap-5 mb-10 shadow-lg border border-rose-500/20 animate-pulse">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center animate-bounce shrink-0">
+            <Video className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-center md:text-left">
+            <span className="bg-rose-800 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md inline-block mb-1.5 shadow-sm">
+              🔴 Live Computer Class Active
+            </span>
+            <h3 className="font-extrabold text-base md:text-lg text-white">Join the Live Google Meet Computer Class Now!</h3>
+            <p className="text-xs text-indigo-100 mt-0.5">Click the join button to connect directly to the active live lesson stream.</p>
+          </div>
+        </div>
+        <a 
+          href="https://meet.google.com/nxu-xpbr-rkb" 
+          target="_blank" 
+          rel="noreferrer" 
+          className="bg-white hover:bg-slate-50 text-rose-600 font-extrabold px-6 py-3.5 rounded-2xl text-xs transition shadow-md flex items-center gap-2 shrink-0 cursor-pointer w-full md:w-auto justify-center"
+        >
+          <Video size={14} className="animate-pulse" /> JOIN COMPUTER CLASS (LIVE)
+        </a>
+      </div>
+
       {/* 1. Header Hero Area */}
       <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden mb-12">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -569,82 +593,122 @@ export default function ComputerSection({
           )}
         </div>
 
-        {computerClasses.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 max-w-2xl mx-auto">
-            <div className="text-3xl mb-2">📹</div>
-            <p className="text-xs font-medium text-slate-500">No active online classes scheduled for Computer section today.</p>
-            <p className="text-[11px] text-slate-400 mt-1 mb-4">Our direct portal allows streaming tutorials anytime.</p>
-            <button 
-              onClick={() => setCurrentPage('online')}
-              className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-5 py-2.5 rounded-xl transition"
-            >
-              Go to Online Classes Hub
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Pinned Official Live Google Meet Class */}
+          <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-3xl overflow-hidden shadow-lg border border-rose-500/30 flex flex-col justify-between hover:shadow-2xl transition duration-300 relative group min-h-[380px]">
+            <div className="absolute top-4 right-4 z-20">
+              <span className="bg-rose-600 animate-pulse text-white px-2.5 py-1 rounded-full text-[9px] font-black tracking-widest flex items-center gap-1 shadow-md">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                LIVE NOW
+              </span>
+            </div>
+            
+            {/* Top Banner with Computer Graphic Overlay */}
+            <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: 'linear-gradient(to bottom right, #090d16, #1e1b4b, #111827)' }}>
+              <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-rose-600/15 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-all duration-500"></div>
+              <div className="relative z-10">
+                <span className="bg-white/10 backdrop-blur-md text-rose-300 border border-rose-500/25 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                  💻 Computer Class Wing
+                </span>
+              </div>
+              <div className="relative z-10">
+                <p className="text-slate-300 text-xs font-semibold">Instructor: MBA Academy IT Experts</p>
+              </div>
+            </div>
+
+            {/* Body Content */}
+            <div className="p-6 flex-1 flex flex-col justify-between bg-white text-slate-800">
+              <div>
+                <div className="mb-3">
+                  <h3 className="text-lg font-extrabold text-slate-900 leading-snug">Daily Live Computer Class Lecture</h3>
+                  <span className="inline-block bg-rose-50 text-rose-700 px-2.5 py-0.5 rounded-md text-[10px] font-bold mt-1">Status: Session is Active</span>
+                </div>
+                
+                <div className="space-y-1.5 mb-6 text-xs text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <span>📅</span>
+                    <span>Monday to Saturday</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>⏰</span>
+                    <span>Daily Morning & Evening Batches</span>
+                  </div>
+                </div>
+              </div>
+
+              <a 
+                href="https://meet.google.com/nxu-xpbr-rkb" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="w-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-extrabold py-3.5 px-4 rounded-xl text-center text-xs transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <Video size={14} className="animate-pulse" /> Join Live Computer Class (Google Meet)
+              </a>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {computerClasses.map(c => {
-              const { title, section } = parseOnlineTitle(c.title);
-              return (
-                <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-200 flex flex-col justify-between hover:shadow-xl transition duration-300">
-                  {/* Top Banner with Class Image */}
-                  <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: c.classImg ? `url(${c.classImg}) center/cover no-repeat` : 'linear-gradient(to bottom right, #0f172a, #1e1b4b, #172554)' }}>
-                    {c.classImg && <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>}
-                    <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-blue-600/20 rounded-full blur-2xl pointer-events-none"></div>
-                    
-                    <div className="relative z-10 flex items-center justify-between w-full">
-                      <span className="bg-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-md">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                        {c.isRecorded ? 'RECORDED' : 'LIVE'}
+
+          {/* Other computer classes from Database */}
+          {computerClasses.map(c => {
+            const { title, section } = parseOnlineTitle(c.title);
+            return (
+              <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-200 flex flex-col justify-between hover:shadow-xl transition duration-300">
+                {/* Top Banner with Class Image */}
+                <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: c.classImg ? `url(${c.classImg}) center/cover no-repeat` : 'linear-gradient(to bottom right, #0f172a, #1e1b4b, #172554)' }}>
+                  {c.classImg && <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>}
+                  <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-blue-600/20 rounded-full blur-2xl pointer-events-none"></div>
+                  
+                  <div className="relative z-10 flex items-center justify-between w-full">
+                    <span className="bg-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-md">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                      {c.isRecorded ? 'RECORDED' : 'LIVE'}
+                    </span>
+                    {section && (
+                      <span className="bg-white/20 backdrop-blur-md text-white px-2.5 py-1 rounded-full text-[10px] font-bold">
+                        {section}
                       </span>
+                    )}
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <p className="text-slate-300 text-xs font-semibold">{c.teacher}</p>
+                  </div>
+                </div>
+
+                {/* Body Content */}
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="mb-3">
+                      <h3 className="text-lg font-extrabold text-slate-900 line-clamp-2">{title}</h3>
                       {section && (
-                        <span className="bg-white/20 backdrop-blur-md text-white px-2.5 py-1 rounded-full text-[10px] font-bold">
-                          {section}
-                        </span>
+                        <span className="inline-block bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[10px] font-bold mt-1">Section: {section}</span>
                       )}
                     </div>
                     
-                    <div className="relative z-10">
-                      <p className="text-slate-300 text-xs font-semibold">{c.teacher}</p>
+                    <div className="space-y-1.5 mb-6 text-xs text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400">📅</span>
+                        <span>{c.date ? new Date(c.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Today'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400">⏰</span>
+                        <span>{c.time}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Body Content */}
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="mb-3">
-                        <h3 className="text-lg font-extrabold text-slate-900 line-clamp-2">{title}</h3>
-                        {section && (
-                          <span className="inline-block bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[10px] font-bold mt-1">Section: {section}</span>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-1.5 mb-6 text-xs text-slate-600">
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-400">📅</span>
-                          <span>{c.date ? new Date(c.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Today'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-400">⏰</span>
-                          <span>{c.time}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <a 
-                      href={c.link} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-center text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
-                    >
-                      <Video size={14} /> Join Computer Lecture Link
-                    </a>
-                  </div>
+                  <a 
+                    href={c.link} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-center text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <Video size={14} /> Join Computer Lecture Link
+                  </a>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* 7. Quick Admission Enquiry Form */}
