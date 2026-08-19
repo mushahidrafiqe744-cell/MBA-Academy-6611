@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { supabase } from './lib/supabase';
 import { 
   GraduationCap, BookOpen, Users, Award, Calendar, CheckCircle, 
@@ -1928,7 +1929,13 @@ export default function App() {
           </div>
 
           {searchedResult && (
-            <div id="official-results-card" className="bg-white rounded-3xl shadow-2xl border-4 border-amber-500/80 p-8 md:p-10 relative overflow-hidden mb-12 text-slate-800">
+            <motion.div 
+              id="official-results-card" 
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-3xl shadow-2xl border-4 border-amber-500/80 p-8 md:p-10 relative overflow-hidden mb-12 text-slate-800"
+            >
               {/* Certificate Header */}
               <div className="flex justify-between items-center border-b-2 border-slate-900 pb-6 mb-6 flex-wrap gap-4">
                 <div className="flex items-center gap-3">
@@ -2082,7 +2089,7 @@ export default function App() {
                   🖨️ Print / Download Results Card
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Published Results list visible to everyone with link */}
