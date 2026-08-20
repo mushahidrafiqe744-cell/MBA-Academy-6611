@@ -197,9 +197,7 @@ export default function App() {
 
   // Admin password input for UI login
   const [adminPassInput, setAdminPassInput] = useState('');
-  const [adminPassword, setAdminPassword] = useState(() => {
-    return localStorage.getItem('tuition_admin_password_v1') || 'King6611';
-  });
+  const [adminPassword, setAdminPassword] = useState('Mushahid');
   const [newPasswordInput, setNewPasswordInput] = useState('');
 
   // App lock gate password state & functions (Personal Lock)
@@ -2880,48 +2878,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* ADMIN PASSWORD SETTINGS */}
-              <div className="bg-white border border-slate-200 rounded-3xl p-6 mb-8 shadow-xs text-left">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-rose-50 rounded-2xl text-rose-600 shrink-0">
-                      <Lock className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-slate-900 text-base">Change Admin Password</h3>
-                      <p className="text-xs text-slate-600 mt-0.5">Secure your admin portal by updating your default password.</p>
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 self-start sm:self-auto">
-                    Current Password: <span className="font-mono bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-800">{adminPassword}</span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-3">
-                  <input 
-                    type="text"
-                    placeholder="Enter New Password"
-                    value={newPasswordInput}
-                    onChange={e => setNewPasswordInput(e.target.value)}
-                    className="p-3 rounded-xl border border-slate-200 text-xs outline-none bg-slate-50 w-full sm:w-64 font-mono text-slate-800"
-                  />
-                  <button 
-                    onClick={() => {
-                      if (!newPasswordInput.trim()) {
-                        alert('Please enter a valid password.');
-                        return;
-                      }
-                      localStorage.setItem('tuition_admin_password_v1', newPasswordInput.trim());
-                      setAdminPassword(newPasswordInput.trim());
-                      setNewPasswordInput('');
-                      alert('Admin Password updated successfully to: ' + newPasswordInput.trim());
-                    }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-3 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center"
-                  >
-                    Update Password
-                  </button>
-                </div>
-              </div>
+
 
 
 
