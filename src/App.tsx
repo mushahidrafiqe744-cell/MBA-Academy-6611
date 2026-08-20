@@ -56,6 +56,14 @@ export default function App() {
     return localStorage.getItem('tuition_academy_logo_v1') || '/logo.jpg';
   });
   const [logoError, setLogoError] = useState(false);
+  
+  const [heroBg, setHeroBg] = useState<string>(() => {
+    return localStorage.getItem('tuition_hero_bg_v2') || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80";
+  });
+
+  const [admissionBg, setAdmissionBg] = useState<string>(() => {
+    return localStorage.getItem('tuition_admission_bg_v2') || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80";
+  });
 
   const [teachers, setTeachers] = useState<any[]>([]);
   const [onlineClasses, setOnlineClasses] = useState<any[]>([]);
@@ -132,6 +140,44 @@ export default function App() {
   const [searchRoll, setSearchRoll] = useState('');
   const [searchClass, setSearchClass] = useState('all');
   const [searchedResult, setSearchedResult] = useState<any>(null);
+
+  // Professional Ad Customization states
+  const [adTitle, setAdTitle] = useState(() => {
+    return localStorage.getItem('tuition_ad_title_v1') || 'MBA ACADEMY';
+  });
+  const [adSub, setAdSub] = useState(() => {
+    return localStorage.getItem('tuition_ad_sub_v1') || 'CLASSES 1 TO 10 • QUALITY EDUCATION & PROFESSIONAL COACHING';
+  });
+  const [adBadge, setAdBadge] = useState(() => {
+    return localStorage.getItem('tuition_ad_badge_v1') || '⭐ Admissions Open 2026-27 ⭐';
+  });
+  const [adFooter, setAdFooter] = useState(() => {
+    return localStorage.getItem('tuition_ad_footer_v1') || '📍 Visit Us Today for Free Demo Class & Assessment • Limited Seats Available!';
+  });
+  const [adPhone, setAdPhone] = useState(() => {
+    return localStorage.getItem('tuition_ad_phone_v1') || '0329-0725117 / 0341-8709574';
+  });
+  const [adWhatsApp, setAdWhatsApp] = useState(() => {
+    return localStorage.getItem('tuition_ad_wa_v1') || '0329-0725117';
+  });
+  const [adCards, setAdCards] = useState<any[]>(() => {
+    const saved = localStorage.getItem('tuition_ad_cards_v1');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      { id: 1, icon: '📚', title: 'Expert Coaching', desc: 'Specialized subject coaching for Math, Science, English, Urdu & Computer.' },
+      { id: 2, icon: '🏆', title: 'Proven Results', desc: '100% success rate with top board positions and weekly test monitoring.' },
+      { id: 3, icon: '👥', title: 'Small Batches', desc: 'Individual attention to every student with daily homework support.' }
+    ];
+  });
+
+  // States for adding a new ad highlight card
+  const [newAdCardIcon, setNewAdCardIcon] = useState('⭐');
+  const [newAdCardTitle, setNewAdCardTitle] = useState('');
+  const [newAdCardDesc, setNewAdCardDesc] = useState('');
 
   // Results state & handlers (Backend + LocalStorage)
   const [resultsList, setResultsList] = useState<any[]>([]);
@@ -918,7 +964,7 @@ export default function App() {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden">
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-3.5 flex justify-between items-center shadow-xs">
         <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentPage('home')}>
@@ -945,19 +991,19 @@ export default function App() {
         </div>
 
         {/* Desktop Menu */}
-        <ul className="hidden lg:flex items-center gap-1 list-none text-sm font-medium">
-          <li><button onClick={() => setCurrentPage('home')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'home' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Home</button></li>
-          <li><button onClick={() => setCurrentPage('ad')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'ad' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-amber-600 hover:bg-amber-50 font-medium'}`}>📢 Pro Ad</button></li>
-          <li><button onClick={() => setCurrentPage('about')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'about' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>About Us</button></li>
-          <li><button onClick={() => setCurrentPage('teachers')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'teachers' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Teachers</button></li>
-          <li><button onClick={() => { setCurrentPage('attendance'); setSelectedClassForAttendance(null); }} className={`px-3 py-2 rounded-lg transition ${currentPage === 'attendance' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Attendance</button></li>
-          <li><button onClick={() => setCurrentPage('admission')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'admission' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Admission</button></li>
-          <li><button onClick={() => setCurrentPage('online')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'online' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Online Classes</button></li>
-          <li><button onClick={() => setCurrentPage('computer')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'computer' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'}`}>💻 Computer</button></li>
-          <li><button onClick={() => setCurrentPage('results')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'results' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Results</button></li>
-          <li><button onClick={() => setCurrentPage('gallery')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
-          <li><button onClick={() => setCurrentPage('contact')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
-          <li><button onClick={() => setCurrentPage('records')} className={`px-3 py-2 rounded-lg transition ${currentPage === 'records' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Records</button></li>
+        <ul className="hidden xl:flex flex-row flex-nowrap items-center gap-1 list-none text-[13px] font-medium whitespace-nowrap">
+          <li><button onClick={() => setCurrentPage('home')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'home' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Home</button></li>
+          <li><button onClick={() => setCurrentPage('ad')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'ad' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-amber-600 hover:bg-amber-50 font-medium'}`}>📢 Pro Ad</button></li>
+          <li><button onClick={() => setCurrentPage('about')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'about' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>About Us</button></li>
+          <li><button onClick={() => setCurrentPage('teachers')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'teachers' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Teachers</button></li>
+          <li><button onClick={() => { setCurrentPage('attendance'); setSelectedClassForAttendance(null); }} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'attendance' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Attendance</button></li>
+          <li><button onClick={() => setCurrentPage('admission')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'admission' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Admission</button></li>
+          <li><button onClick={() => setCurrentPage('online')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'online' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Online Classes</button></li>
+          <li><button onClick={() => setCurrentPage('computer')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'computer' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'}`}>💻 Computer</button></li>
+          <li><button onClick={() => setCurrentPage('results')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'results' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Results</button></li>
+          <li><button onClick={() => setCurrentPage('gallery')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
+          <li><button onClick={() => setCurrentPage('contact')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
+          <li><button onClick={() => setCurrentPage('records')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'records' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Records</button></li>
         </ul>
 
         <div className="flex items-center gap-3">
@@ -988,7 +1034,7 @@ export default function App() {
             W
           </a>
 
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-slate-700 p-1">
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="xl:hidden text-slate-700 p-1">
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -996,7 +1042,7 @@ export default function App() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-3 shadow-lg">
+        <div className="xl:hidden bg-white border-b border-slate-200 px-6 py-4 flex flex-col gap-3 shadow-lg">
           {/* Section Selector in Mobile */}
           <div className="flex items-center justify-between bg-blue-50/80 border border-blue-100 px-4 py-2.5 rounded-xl text-xs font-semibold text-blue-900">
             <span className="text-[11px] uppercase tracking-wide font-extrabold text-blue-600">🏫 Filter Section:</span>
@@ -1035,8 +1081,9 @@ export default function App() {
       {/* PAGE: HOME */}
       {currentPage === 'home' && (
         <div>
-          <div className="min-h-[85vh] bg-gradient-to-br from-blue-900/95 via-blue-800/90 to-slate-900/95 text-white px-6 md:px-12 py-16 flex items-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1600&q=80')] bg-cover bg-center mix-blend-overlay opacity-25"></div>
+          <div className="min-h-[85vh] text-white px-6 md:px-12 py-16 flex items-center relative overflow-hidden bg-slate-950">
+            <div className="absolute inset-0 bg-cover bg-center opacity-85" style={{ backgroundImage: `url(${heroBg})` }}></div>
+            <div className="absolute inset-0 bg-black/45 pointer-events-none"></div>
             <div className="max-w-4xl relative z-10">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-xs font-medium mb-6">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Admissions Open 2026-27 | Limited Seats
@@ -1367,22 +1414,29 @@ export default function App() {
       {currentPage === 'admission' && (
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden grid md:grid-cols-[300px_1fr]">
-            <div className="bg-blue-700 text-white p-8 flex flex-col justify-between">
-              <div>
-                <h2 className="text-2xl font-bold mb-3">Admission Form</h2>
-                <p className="text-xs text-blue-100 leading-relaxed mb-6">Fill in student details. The student will be automatically added to the class attendance list.</p>
-                <div className="space-y-4 text-xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">📞</div>
-                    <div><b>Call Us</b><br /><span className="text-blue-100">+92 329 0725117</span></div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">📍</div>
-                    <div><b>Visit Campus</b><br /><span className="text-blue-100">Main Campus, Education City</span></div>
+            <div className="text-white p-8 flex flex-col justify-between relative overflow-hidden bg-slate-900 min-h-[400px]">
+              {/* Clean Background Image with No Color Tint */}
+              <div className="absolute inset-0 bg-cover bg-center opacity-100 pointer-events-none" style={{ backgroundImage: `url(${admissionBg})` }}></div>
+              {/* Subtle dark bottom vignette to guarantee text legibility without colorizing the image */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20 pointer-events-none"></div>
+              
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <h2 className="text-2xl font-black mb-3 drop-shadow-md text-white">Admission Form</h2>
+                  <p className="text-xs text-white/90 font-medium leading-relaxed mb-6 drop-shadow-sm">Fill in student details. The student will be automatically added to the class attendance list.</p>
+                  <div className="space-y-4 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20">📞</div>
+                      <div><b>Call Us</b><br /><span className="text-white/90">+92 329 0725117</span></div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20">📍</div>
+                      <div><b>Visit Campus</b><br /><span className="text-white/90">Main Campus, Education City</span></div>
+                    </div>
                   </div>
                 </div>
+                <div className="mt-8 text-xs text-white/70 font-bold drop-shadow-sm">MBA Academy System v2.6</div>
               </div>
-              <div className="mt-8 text-xs text-blue-200">MBA Academy System v2.6</div>
             </div>
 
             <div className="p-8 md:p-10">
@@ -2041,18 +2095,16 @@ export default function App() {
               </div>
 
               {/* Signatures with official sign images */}
-              <div className="grid grid-cols-3 gap-6 pt-10 pb-6 text-center text-xs text-slate-600 font-semibold items-end">
-                <div className="border-t-2 border-slate-400 pt-3 relative">
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 font-serif italic text-blue-900 text-lg opacity-80 select-none">M. Tariq</div>
-                  Class Teacher Signature
+              <div className="flex justify-between gap-12 pt-12 pb-6 text-center text-xs text-slate-600 font-semibold px-4">
+                <div className="w-56 border-t-2 border-slate-800 pt-3 relative">
+                  {/* Blank space for manual signature */}
+                  <div className="h-12"></div>
+                  <span className="text-slate-800 font-extrabold tracking-wider text-[11px] uppercase">Head Signature</span>
                 </div>
-                <div className="border-t-2 border-slate-400 pt-3 relative">
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 font-serif italic text-slate-700 text-lg opacity-80 select-none">Guardian</div>
-                  Parent / Guardian Signature
-                </div>
-                <div className="border-t-2 border-slate-400 pt-3 relative">
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 font-serif italic text-amber-800 font-bold text-lg opacity-90 select-none">Prof. A. Rauf</div>
-                  Principal Signature
+                <div className="w-56 border-t-2 border-slate-800 pt-3 relative">
+                  {/* Blank space for manual signature */}
+                  <div className="h-12"></div>
+                  <span className="text-slate-800 font-extrabold tracking-wider text-[11px] uppercase">Principal Signature</span>
                 </div>
               </div>
 
@@ -2230,9 +2282,9 @@ export default function App() {
             <p className="text-sm text-slate-600 mt-2 max-w-xl mx-auto">Preview and share our professional coaching admission ad. Print or download for distribution.</p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950 text-white rounded-3xl p-8 md:p-14 shadow-2xl border-4 border-amber-400 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white rounded-3xl p-8 md:p-14 shadow-2xl border-4 border-amber-400 relative overflow-hidden">
             {/* Background design accents */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col items-center text-center">
@@ -2251,45 +2303,52 @@ export default function App() {
               </div>
 
               <div className="bg-amber-400 text-blue-950 px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-md">
-                ⭐ Admissions Open 2026-27 ⭐
+                {adBadge}
               </div>
 
-              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">
-                MBA ACADEMY
+              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3 uppercase">
+                {adTitle}
               </h2>
               <p className="text-amber-300 font-bold text-lg md:text-xl tracking-wide mb-6">
-                CLASSES 1 TO 10 • QUALITY EDUCATION & PROFESSIONAL COACHING
+                {adSub}
               </p>
 
-              <div className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 my-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                  <div className="text-2xl mb-2">📚</div>
-                  <h4 className="font-bold text-white text-sm mb-1">Expert Coaching</h4>
-                  <p className="text-xs text-slate-300">Specialized subject coaching for Math, Science, English, Urdu & Computer.</p>
-                </div>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                  <div className="text-2xl mb-2">🏆</div>
-                  <h4 className="font-bold text-white text-sm mb-1">Proven Results</h4>
-                  <p className="text-xs text-slate-300">100% success rate with top board positions and weekly test monitoring.</p>
-                </div>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                  <div className="text-2xl mb-2">👥</div>
-                  <h4 className="font-bold text-white text-sm mb-1">Small Batches</h4>
-                  <p className="text-xs text-slate-300">Individual attention to every student with daily homework support.</p>
-                </div>
+              <div className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 my-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
+                {adCards.map((card, idx) => (
+                  <div key={card.id || idx} className="bg-white/5 p-4 rounded-xl border border-white/10 relative group">
+                    <div className="text-2xl mb-2">{card.icon}</div>
+                    <h4 className="font-bold text-white text-sm mb-1">{card.title}</h4>
+                    <p className="text-xs text-slate-300">{card.desc}</p>
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          if (confirm(`Remove "${card.title}" card?`)) {
+                            const updated = adCards.filter((_, i) => i !== idx);
+                            setAdCards(updated);
+                            localStorage.setItem('tuition_ad_cards_v1', JSON.stringify(updated));
+                          }
+                        }}
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-red-600 hover:bg-red-700 text-white rounded p-1 text-[10px] transition cursor-pointer"
+                        title="Delete Card"
+                      >
+                        ❌
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
 
               <div className="flex flex-wrap justify-center gap-6 my-6 text-sm">
                 <div className="bg-emerald-600/90 text-white px-6 py-3 rounded-2xl shadow-lg font-bold flex items-center gap-2">
-                  <span>📞 Phone:</span> <span>0329-0725117 / 0341-8709574</span>
+                  <span>📞 Phone:</span> <span>{adPhone}</span>
                 </div>
-                <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg font-bold flex items-center gap-2 transition">
-                  <span>💬 WhatsApp Support:</span> <span>0329-0725117</span>
+                <a href={`https://wa.me/92${adWhatsApp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-lg font-bold flex items-center gap-2 transition">
+                  <span>💬 WhatsApp Support:</span> <span>{adWhatsApp}</span>
                 </a>
               </div>
 
               <div className="mt-4 text-xs text-slate-300 font-medium">
-                📍 Visit Us Today for Free Demo Class & Assessment • Limited Seats Available!
+                {adFooter}
               </div>
             </div>
           </div>
@@ -2452,6 +2511,372 @@ export default function App() {
                       Reset Default
                     </button>
                   )}
+                </div>
+              </div>
+
+              {/* HOME HERO BACKGROUND IMAGE SETTINGS */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs text-left">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-emerald-200 p-2 overflow-hidden flex items-center justify-center shrink-0">
+                    <img 
+                      src={heroBg} 
+                      alt="Hero BG Preview" 
+                      className="w-full h-full object-cover rounded-xl" 
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-base">Homepage Hero Background Image</h3>
+                    <p className="text-xs text-slate-600 mt-0.5">Upload a naya picture / custom image or paste a photo URL for the Homepage background. It supports direct uploads!</p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+                  <input 
+                    type="text" 
+                    placeholder="Paste Image URL..." 
+                    value={heroBg.startsWith('data:') ? '' : heroBg} 
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        localStorage.setItem('tuition_hero_bg_v2', e.target.value);
+                        setHeroBg(e.target.value);
+                      }
+                    }} 
+                    className="bg-white px-3 py-2 border border-emerald-200 rounded-xl text-xs outline-none w-full sm:w-48"
+                  />
+                  
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    id="heroBgUpload" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          const base64 = reader.result as string;
+                          localStorage.setItem('tuition_hero_bg_v2', base64);
+                          setHeroBg(base64);
+                          alert('Homepage background updated successfully!');
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }} 
+                  />
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <button 
+                      onClick={() => document.getElementById('heroBgUpload')?.click()} 
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer flex-1 sm:flex-initial justify-center"
+                    >
+                      <span>📁</span> Upload Image
+                    </button>
+                    {heroBg !== "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80" && (
+                      <button 
+                        onClick={() => {
+                          if (confirm('Reset hero background to default?')) {
+                            localStorage.removeItem('tuition_hero_bg_v2');
+                            setHeroBg("https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80");
+                          }
+                        }} 
+                        className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-3 py-2.5 rounded-xl text-xs transition cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ADMISSION FORM BACKGROUND IMAGE SETTINGS */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-6 mb-8 flex flex-col gap-6 shadow-xs text-left">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-blue-200 p-2 overflow-hidden flex items-center justify-center shrink-0">
+                      <img 
+                        src={admissionBg} 
+                        alt="Admission BG Preview" 
+                        className="w-full h-full object-cover rounded-xl" 
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-base">Admission Form Sidebar Image</h3>
+                      <p className="text-xs text-slate-600 mt-0.5">Upload a custom image, paste a picture URL, or choose one of our beautiful educational presets below!</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+                    <input 
+                      type="text" 
+                      placeholder="Paste Image URL..." 
+                      value={admissionBg.startsWith('data:') ? '' : admissionBg} 
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          localStorage.setItem('tuition_admission_bg_v2', e.target.value);
+                          setAdmissionBg(e.target.value);
+                        }
+                      }} 
+                      className="bg-white px-3 py-2 border border-blue-200 rounded-xl text-xs outline-none w-full sm:w-48"
+                    />
+                    
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      id="admissionBgUpload" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            const base64 = reader.result as string;
+                            localStorage.setItem('tuition_admission_bg_v2', base64);
+                            setAdmissionBg(base64);
+                            alert('Admission Form background updated successfully!');
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }} 
+                    />
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <button 
+                        onClick={() => document.getElementById('admissionBgUpload')?.click()} 
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer flex-1 sm:flex-initial justify-center"
+                      >
+                        <span>📁</span> Upload Custom Image
+                      </button>
+                      {admissionBg !== "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80" && (
+                        <button 
+                          onClick={() => {
+                            if (confirm('Reset admission background to default?')) {
+                              localStorage.removeItem('tuition_admission_bg_v2');
+                              setAdmissionBg("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80");
+                            }
+                          }} 
+                          className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-3 py-2.5 rounded-xl text-xs transition cursor-pointer"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Educational Presets */}
+                <div className="border-t border-blue-100/50 pt-4">
+                  <h4 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-1">
+                    ✨ Quick Presets (Click to set instantly)
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {[
+                      { name: 'Classmates Study', url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80' },
+                      { name: 'Library Books', url: 'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=1200&q=80' },
+                      { name: 'Board / Classroom', url: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1200&q=80' },
+                      { name: 'Bright Library', url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1200&q=80' },
+                      { name: 'Modern Campus', url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80' }
+                    ].map((preset, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setAdmissionBg(preset.url);
+                          localStorage.setItem('tuition_admission_bg_v2', preset.url);
+                        }}
+                        className={`group relative h-16 rounded-xl overflow-hidden border-2 text-left transition cursor-pointer ${admissionBg === preset.url ? 'border-blue-600 shadow-md scale-102' : 'border-slate-200 hover:border-slate-300'}`}
+                      >
+                        <img 
+                          src={preset.url} 
+                          alt={preset.name} 
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/60 flex items-end p-1.5">
+                          <span className="text-[9px] text-white font-bold leading-tight line-clamp-2">{preset.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* PROFESSIONAL AD POSTER DYNAMIC SETTINGS */}
+              <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20 rounded-3xl p-6 mb-8 text-left">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-800 text-lg">
+                    📢
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-950 text-base">Professional Ad Poster Customizer</h3>
+                    <p className="text-xs text-slate-600 mt-0.5">Customize the text, phone numbers, and features displayed on your Pro Ad Poster page in real-time.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Poster Main Title</label>
+                    <input 
+                      type="text" 
+                      value={adTitle} 
+                      onChange={(e) => {
+                        setAdTitle(e.target.value);
+                        localStorage.setItem('tuition_ad_title_v1', e.target.value);
+                      }} 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-white font-semibold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Admissions Open Badge Tag</label>
+                    <input 
+                      type="text" 
+                      value={adBadge} 
+                      onChange={(e) => {
+                        setAdBadge(e.target.value);
+                        localStorage.setItem('tuition_ad_badge_v1', e.target.value);
+                      }} 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-white font-semibold text-slate-800"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Poster Subtitle / Class Range Details</label>
+                    <input 
+                      type="text" 
+                      value={adSub} 
+                      onChange={(e) => {
+                        setAdSub(e.target.value);
+                        localStorage.setItem('tuition_ad_sub_v1', e.target.value);
+                      }} 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-white font-semibold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number(s)</label>
+                    <input 
+                      type="text" 
+                      value={adPhone} 
+                      onChange={(e) => {
+                        setAdPhone(e.target.value);
+                        localStorage.setItem('tuition_ad_phone_v1', e.target.value);
+                      }} 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-white font-semibold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp Number</label>
+                    <input 
+                      type="text" 
+                      value={adWhatsApp} 
+                      onChange={(e) => {
+                        setAdWhatsApp(e.target.value);
+                        localStorage.setItem('tuition_ad_wa_v1', e.target.value);
+                      }} 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-white font-semibold text-slate-800"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Footer Address & Important Info</label>
+                    <input 
+                      type="text" 
+                      value={adFooter} 
+                      onChange={(e) => {
+                        setAdFooter(e.target.value);
+                        localStorage.setItem('tuition_ad_footer_v1', e.target.value);
+                      }} 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-white font-semibold text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                {/* List of active cards with custom delete option */}
+                <div className="mb-6">
+                  <label className="block text-xs font-bold text-slate-700 mb-2">Active Cards ({adCards.length})</label>
+                  <div className="flex flex-wrap gap-2">
+                    {adCards.map((card, idx) => (
+                      <div key={card.id || idx} className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-slate-700">
+                        <span>{card.icon}</span>
+                        <span>{card.title}</span>
+                        <button 
+                          onClick={() => {
+                            const updated = adCards.filter((_, i) => i !== idx);
+                            setAdCards(updated);
+                            localStorage.setItem('tuition_ad_cards_v1', JSON.stringify(updated));
+                          }}
+                          className="text-red-500 hover:text-red-700 font-bold ml-1 cursor-pointer"
+                          title="Remove Card"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Adding New Highlight Cards Form */}
+                <div className="border-t border-emerald-100 pt-6 mt-6">
+                  <h4 className="font-extrabold text-slate-900 text-sm mb-1">➕ Add More Feature Highlight Cards to Poster</h4>
+                  <p className="text-xs text-slate-500 mb-4">Admins can add unlimited custom cards describing subjects, features, timings, or results.</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Emoji Icon</label>
+                      <select 
+                        value={newAdCardIcon} 
+                        onChange={(e) => setNewAdCardIcon(e.target.value)}
+                        className="w-full p-2 rounded-xl border border-slate-200 text-xs outline-none bg-white font-semibold text-slate-800"
+                      >
+                        <option value="📚">📚 Books</option>
+                        <option value="🏆">🏆 Trophy</option>
+                        <option value="👥">👥 Group</option>
+                        <option value="⭐">⭐ Star</option>
+                        <option value="💻">💻 Computer</option>
+                        <option value="📝">📝 Exam / Notes</option>
+                        <option value="🎓">🎓 Graduate</option>
+                        <option value="⚡">⚡ Fast / Active</option>
+                        <option value="🎯">🎯 Target</option>
+                        <option value="💰">💰 Fees / Cheap</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Card Title</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Matric & Inter Coaching" 
+                        value={newAdCardTitle} 
+                        onChange={(e) => setNewAdCardTitle(e.target.value)} 
+                        className="w-full p-2 rounded-xl border border-slate-200 text-xs outline-none bg-white font-medium text-slate-800"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-[10px] font-bold text-slate-500 mb-1">Short Description</label>
+                    <textarea 
+                      rows={2}
+                      placeholder="e.g. Best subject experts for Biology, Chemistry, Physics, and Urdu coaching." 
+                      value={newAdCardDesc} 
+                      onChange={(e) => setNewAdCardDesc(e.target.value)} 
+                      className="w-full p-2 rounded-xl border border-slate-200 text-xs outline-none bg-white text-slate-800"
+                    />
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      if (!newAdCardTitle.trim() || !newAdCardDesc.trim()) {
+                        alert('Please fill in both Card Title and Description!');
+                        return;
+                      }
+                      const newCard = {
+                        id: Date.now(),
+                        icon: newAdCardIcon,
+                        title: newAdCardTitle.trim(),
+                        desc: newAdCardDesc.trim()
+                      };
+                      const updated = [...adCards, newCard];
+                      setAdCards(updated);
+                      localStorage.setItem('tuition_ad_cards_v1', JSON.stringify(updated));
+                      setNewAdCardTitle('');
+                      setNewAdCardDesc('');
+                      alert('New highlight card added successfully to Ad Poster!');
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow-sm transition inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>➕</span> Add Card to Poster
+                  </button>
                 </div>
               </div>
 

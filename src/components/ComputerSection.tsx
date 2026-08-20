@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Monitor, Terminal, Cpu, Laptop, Shield, BookOpen, Clock, 
   CheckCircle, Users, Video, MessageSquare, Award, ArrowRight, Star
@@ -43,6 +43,59 @@ export default function ComputerSection({
   handleDeleteTeacher,
   setCurrentPage
 }: ComputerSectionProps) {
+  // Live Class Scheduling states (saved in localStorage for persistence)
+  const [liveStart, setLiveStart] = useState(() => {
+    return localStorage.getItem('tuition_comp_live_start') || '09:00';
+  });
+  const [liveEnd, setLiveEnd] = useState(() => {
+    return localStorage.getItem('tuition_comp_live_end') || '11:00';
+  });
+  const [isLiveActive, setIsLiveActive] = useState(false);
+  const [timeLeftStr, setTimeLeftStr] = useState('');
+
+  useEffect(() => {
+    const checkLiveStatus = () => {
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const currentSeconds = now.getSeconds();
+      
+      const [startH, startM] = liveStart.split(':').map(Number);
+      const [endH, endM] = liveEnd.split(':').map(Number);
+      
+      const nowVal = currentHours * 3600 + currentMinutes * 60 + currentSeconds;
+      const startVal = startH * 3600 + startM * 60;
+      const endVal = endH * 3600 + endM * 60;
+      
+      if (nowVal >= startVal && nowVal < endVal) {
+        setIsLiveActive(true);
+        // Calculate remaining seconds
+        const diffSec = endVal - nowVal;
+        const h = Math.floor(diffSec / 3600);
+        const m = Math.floor((diffSec % 3600) / 60);
+        const s = diffSec % 60;
+        setTimeLeftStr(`${h > 0 ? h + 'h ' : ''}${m}m ${s}s left`);
+      } else {
+        setIsLiveActive(false);
+        // Calculate time until next start (assume next day if past start time today)
+        let diffSec = 0;
+        if (nowVal < startVal) {
+          diffSec = startVal - nowVal;
+        } else {
+          diffSec = (24 * 3600 - nowVal) + startVal;
+        }
+        const h = Math.floor(diffSec / 3600);
+        const m = Math.floor((diffSec % 3600) / 60);
+        const s = diffSec % 60;
+        setTimeLeftStr(`Starts in ${h > 0 ? h + 'h ' : ''}${m}m ${s}s`);
+      }
+    };
+    
+    checkLiveStatus();
+    const interval = setInterval(checkLiveStatus, 1000);
+    return () => clearInterval(interval);
+  }, [liveStart, liveEnd]);
+
   // Course Selector State
   const [activeCourseTab, setActiveCourseTab] = useState<'office' | 'design' | 'web' | 'freelance'>('office');
   
@@ -168,28 +221,30 @@ export default function ComputerSection({
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
       {/* 🔴 Live Google Meet Class Action Banner */}
-      <div className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 rounded-3xl p-5 md:p-6 text-white flex flex-col md:flex-row items-center justify-between gap-5 mb-10 shadow-lg border border-rose-500/20 animate-pulse">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center animate-bounce shrink-0">
-            <Video className="w-6 h-6 text-white" />
+      {isLiveActive && (
+        <div className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 rounded-3xl p-5 md:p-6 text-white flex flex-col md:flex-row items-center justify-between gap-5 mb-10 shadow-lg border border-rose-500/20 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center animate-bounce shrink-0">
+              <Video className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-center md:text-left">
+              <span className="bg-rose-800 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md inline-block mb-1.5 shadow-sm animate-ping duration-1000">
+                🔴 Live Computer Class Active
+              </span>
+              <h3 className="font-extrabold text-base md:text-lg text-white">Join the Live Google Meet Computer Class Now!</h3>
+              <p className="text-xs text-indigo-100 mt-0.5">Session ends in <b className="text-amber-300 font-bold">{timeLeftStr}</b>. Click the join button to connect directly.</p>
+            </div>
           </div>
-          <div className="text-center md:text-left">
-            <span className="bg-rose-800 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md inline-block mb-1.5 shadow-sm">
-              🔴 Live Computer Class Active
-            </span>
-            <h3 className="font-extrabold text-base md:text-lg text-white">Join the Live Google Meet Computer Class Now!</h3>
-            <p className="text-xs text-indigo-100 mt-0.5">Click the join button to connect directly to the active live lesson stream.</p>
-          </div>
+          <a 
+            href="https://meet.google.com/nxu-xpbr-rkb" 
+            target="_blank" 
+            rel="noreferrer" 
+            className="bg-white hover:bg-slate-50 text-rose-600 font-extrabold px-6 py-3.5 rounded-2xl text-xs transition shadow-md flex items-center gap-2 shrink-0 cursor-pointer w-full md:w-auto justify-center"
+          >
+            <Video size={14} className="animate-pulse" /> JOIN COMPUTER CLASS (LIVE)
+          </a>
         </div>
-        <a 
-          href="https://meet.google.com/nxu-xpbr-rkb" 
-          target="_blank" 
-          rel="noreferrer" 
-          className="bg-white hover:bg-slate-50 text-rose-600 font-extrabold px-6 py-3.5 rounded-2xl text-xs transition shadow-md flex items-center gap-2 shrink-0 cursor-pointer w-full md:w-auto justify-center"
-        >
-          <Video size={14} className="animate-pulse" /> JOIN COMPUTER CLASS (LIVE)
-        </a>
-      </div>
+      )}
 
       {/* 1. Header Hero Area */}
       <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden mb-12">
@@ -578,7 +633,7 @@ export default function ComputerSection({
 
       {/* 6. Active Online Lectures (Computer Section) */}
       <div className="mb-16">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-slate-900 font-extrabold">Computer Online Lectures & Classes</h2>
             <p className="text-xs text-slate-500 mt-1">Access Zoom live streams, virtual video links, and recorded class materials.</p>
@@ -593,21 +648,68 @@ export default function ComputerSection({
           )}
         </div>
 
+        {/* ⚙️ ADMIN TIMING CONTROLS FOR LIVE CLASS */}
+        {isAdmin && (
+          <div className="bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/25 p-5 rounded-2xl mb-8 text-xs text-slate-800 max-w-2xl">
+            <h4 className="font-extrabold text-amber-950 text-sm mb-2 flex items-center gap-1.5">
+              ⚙️ Live Computer Class Timer (Admin Control)
+            </h4>
+            <p className="text-slate-600 mb-4 leading-relaxed">
+              Set the exact timing when the Live Google Meet banner and card should turn **ON** and **OFF** automatically.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700">Start Time:</span>
+                <input 
+                  type="time" 
+                  value={liveStart} 
+                  onChange={(e) => {
+                    localStorage.setItem('tuition_comp_live_start', e.target.value);
+                    setLiveStart(e.target.value);
+                  }} 
+                  className="bg-white p-2 rounded-lg border border-slate-300 font-extrabold text-slate-800 focus:ring-2 focus:ring-amber-500 outline-none transition" 
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700">End Time:</span>
+                <input 
+                  type="time" 
+                  value={liveEnd} 
+                  onChange={(e) => {
+                    localStorage.setItem('tuition_comp_live_end', e.target.value);
+                    setLiveEnd(e.target.value);
+                  }} 
+                  className="bg-white p-2 rounded-lg border border-slate-300 font-extrabold text-slate-800 focus:ring-2 focus:ring-amber-500 outline-none transition" 
+                />
+              </div>
+              <div className="text-[11px] text-amber-800 font-medium">
+                Current status: {isLiveActive ? '🟢 Live Active Now' : '⚪ Currently Closed / Offline'}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Pinned Official Live Google Meet Class */}
-          <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-3xl overflow-hidden shadow-lg border border-rose-500/30 flex flex-col justify-between hover:shadow-2xl transition duration-300 relative group min-h-[380px]">
+          <div className={`rounded-3xl overflow-hidden shadow-lg border flex flex-col justify-between hover:shadow-2xl transition duration-300 relative group min-h-[380px] ${isLiveActive ? 'bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 border-rose-500/40' : 'bg-slate-900 border-slate-800 opacity-90'}`}>
             <div className="absolute top-4 right-4 z-20">
-              <span className="bg-rose-600 animate-pulse text-white px-2.5 py-1 rounded-full text-[9px] font-black tracking-widest flex items-center gap-1 shadow-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
-                LIVE NOW
-              </span>
+              {isLiveActive ? (
+                <span className="bg-rose-600 animate-pulse text-white px-2.5 py-1 rounded-full text-[9px] font-black tracking-widest flex items-center gap-1 shadow-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                  LIVE NOW
+                </span>
+              ) : (
+                <span className="bg-slate-700 text-slate-300 px-2.5 py-1 rounded-full text-[9px] font-black tracking-widest flex items-center gap-1 shadow-md">
+                  ⚪ CLASS CLOSED
+                </span>
+              )}
             </div>
             
             {/* Top Banner with Computer Graphic Overlay */}
             <div className="p-6 relative overflow-hidden text-white h-48 flex flex-col justify-between" style={{ background: 'linear-gradient(to bottom right, #090d16, #1e1b4b, #111827)' }}>
-              <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-rose-600/15 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-all duration-500"></div>
+              <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-all duration-500"></div>
               <div className="relative z-10">
-                <span className="bg-white/10 backdrop-blur-md text-rose-300 border border-rose-500/25 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                <span className="bg-white/10 backdrop-blur-md text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
                   💻 Computer Class Wing
                 </span>
               </div>
@@ -621,7 +723,15 @@ export default function ComputerSection({
               <div>
                 <div className="mb-3">
                   <h3 className="text-lg font-extrabold text-slate-900 leading-snug">Daily Live Computer Class Lecture</h3>
-                  <span className="inline-block bg-rose-50 text-rose-700 px-2.5 py-0.5 rounded-md text-[10px] font-bold mt-1">Status: Session is Active</span>
+                  {isLiveActive ? (
+                    <span className="inline-block bg-rose-50 text-rose-700 border border-rose-100 px-2.5 py-0.5 rounded-md text-[10px] font-bold mt-1">
+                      🟢 Status: Session is Active ({timeLeftStr})
+                    </span>
+                  ) : (
+                    <span className="inline-block bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-md text-[10px] font-bold mt-1">
+                      ⚪ Status: Class Offline ({timeLeftStr})
+                    </span>
+                  )}
                 </div>
                 
                 <div className="space-y-1.5 mb-6 text-xs text-slate-600">
@@ -631,19 +741,28 @@ export default function ComputerSection({
                   </div>
                   <div className="flex items-center gap-2">
                     <span>⏰</span>
-                    <span>Daily Morning & Evening Batches</span>
+                    <span>Timing: <b className="text-indigo-950 font-bold">{liveStart} to {liveEnd}</b> Daily</span>
                   </div>
                 </div>
               </div>
 
-              <a 
-                href="https://meet.google.com/nxu-xpbr-rkb" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="w-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-extrabold py-3.5 px-4 rounded-xl text-center text-xs transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
-              >
-                <Video size={14} className="animate-pulse" /> Join Live Computer Class (Google Meet)
-              </a>
+              {isLiveActive ? (
+                <a 
+                  href="https://meet.google.com/nxu-xpbr-rkb" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="w-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-extrabold py-3.5 px-4 rounded-xl text-center text-xs transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <Video size={14} className="animate-pulse" /> Join Live Computer Class (Google Meet)
+                </a>
+              ) : (
+                <button 
+                  disabled
+                  className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-center text-xs cursor-not-allowed flex items-center justify-center gap-1.5"
+                >
+                  <span>🔕</span> Class Inactive (Offline)
+                </button>
+              )}
             </div>
           </div>
 
