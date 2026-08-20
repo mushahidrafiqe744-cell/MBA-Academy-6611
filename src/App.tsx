@@ -197,8 +197,12 @@ export default function App() {
 
   // Admin password input for UI login
   const [adminPassInput, setAdminPassInput] = useState('');
-  const [adminPassword, setAdminPassword] = useState('Mushahid');
+  const [adminPassword, setAdminPassword] = useState('Mushahid6611');
   const [newPasswordInput, setNewPasswordInput] = useState('');
+  
+  // Custom Admin Login Modal states
+  const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
+  const [adminLoginPasswordInput, setAdminLoginPasswordInput] = useState('');
 
   // App lock gate password state & functions (Personal Lock)
   const [appGatePassword, setAppGatePassword] = useState(() => {
@@ -213,7 +217,7 @@ export default function App() {
   const [gateNewPasswordInput, setGateNewPasswordInput] = useState('');
 
   const handleVerifyGate = () => {
-    if (appGateInput === appGatePassword || appGateInput === adminPassword || appGateInput === 'King6611') {
+    if (appGateInput === appGatePassword || appGateInput === adminPassword) {
       setAppUnlocked(true);
       localStorage.setItem('app_gate_unlocked_v1', 'true');
       setIsAdmin(true);
@@ -679,15 +683,20 @@ export default function App() {
       alert('Admin logged out successfully');
       setCurrentPage('home');
     } else {
-      const p = prompt("Enter Admin Password:", "King6611");
-      if (p === adminPassword || p === 'admin' || p === 'King6611') {
-        setIsAdmin(true);
-        localStorage.setItem('ta_admin', '1');
-        setCurrentPage('records');
-        alert('Admin Access Granted! Opening Admin Dashboard.');
-      } else if (p !== null) {
-        alert('Incorrect password!');
-      }
+      setAdminLoginPasswordInput('');
+      setShowAdminLoginModal(true);
+    }
+  };
+
+  const handleAdminLoginSubmit = (passwordToTry: string) => {
+    if (passwordToTry === adminPassword) {
+      setIsAdmin(true);
+      localStorage.setItem('ta_admin', '1');
+      setCurrentPage('records');
+      setShowAdminLoginModal(false);
+      alert('Admin Access Granted! Opening Admin Dashboard.');
+    } else {
+      alert('Incorrect password!');
     }
   };
 
@@ -2392,7 +2401,7 @@ export default function App() {
                   onChange={e => setAdminPassInput(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
-                      if (adminPassInput === adminPassword || adminPassInput === 'admin' || adminPassInput === 'King6611') {
+                      if (adminPassInput === adminPassword) {
                         setIsAdmin(true);
                         localStorage.setItem('ta_admin', '1');
                         setAdminPassInput('');
@@ -2405,7 +2414,7 @@ export default function App() {
                   className="p-3 rounded-xl border border-slate-200 text-sm outline-none bg-slate-50 text-center"
                 />
                 <button onClick={() => {
-                  if (adminPassInput === adminPassword || adminPassInput === 'admin' || adminPassInput === 'King6611') {
+                  if (adminPassInput === adminPassword) {
                     setIsAdmin(true);
                     localStorage.setItem('ta_admin', '1');
                     setAdminPassInput('');
@@ -2415,18 +2424,6 @@ export default function App() {
                   }
                 }} className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl text-xs font-semibold shadow-sm transition">
                   Login Admin Dashboard
-                </button>
-                <button onClick={() => {
-                  const pass = prompt('Enter Admin Password:', 'King6611');
-                  if (pass === adminPassword || pass === 'admin' || pass === 'King6611') {
-                    setIsAdmin(true);
-                    localStorage.setItem('ta_admin', '1');
-                    alert('Admin Access Granted!');
-                  } else if (pass !== null) {
-                    alert('Incorrect password!');
-                  }
-                }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 rounded-xl text-xs font-semibold transition">
-                  Prompt Password Popup
                 </button>
               </div>
             </div>
@@ -3014,6 +3011,52 @@ export default function App() {
         <span className="text-2xl">💬</span>
         <span className="hidden md:inline text-xs font-bold pr-1">WhatsApp 03290725117</span>
       </a>
+
+      {/* Custom Admin Login Password Modal */}
+      {showAdminLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 border border-blue-100">
+              🔒
+            </div>
+            <h3 className="font-extrabold text-slate-900 text-lg mb-1">Admin Password Required</h3>
+            <p className="text-xs text-slate-500 mb-6">Enter password to gain access to admin controls.</p>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleAdminLoginSubmit(adminLoginPasswordInput);
+            }}>
+              <input 
+                type="password"
+                placeholder="••••••••"
+                value={adminLoginPasswordInput}
+                onChange={(e) => setAdminLoginPasswordInput(e.target.value)}
+                autoFocus
+                className="w-full p-3 border border-slate-200 rounded-xl text-center text-sm font-mono tracking-widest outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50 mb-4 text-slate-800"
+              />
+              
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setShowAdminLoginModal(false);
+                    setAdminLoginPasswordInput('');
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm transition cursor-pointer"
+                >
+                  Confirm OK
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
