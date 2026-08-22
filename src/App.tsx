@@ -10,7 +10,7 @@ import {
   GraduationCap, BookOpen, Users, Award, Calendar, CheckCircle, 
   Phone, MapPin, Clock, MessageSquare, Menu, X, Lock, Unlock, 
   Search, Trash2, Plus, Video, Image as ImageIcon, ShieldCheck, ExternalLink, UserCheck,
-  Monitor, Terminal, Cpu, Laptop, Shield
+  Monitor, Terminal, Cpu, Laptop, Shield, Bell
 } from 'lucide-react';
 import ComputerSection from './components/ComputerSection';
 
@@ -204,6 +204,19 @@ export default function App() {
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [adminLoginPasswordInput, setAdminLoginPasswordInput] = useState('');
 
+  // Notification and subscription states
+  const [studentClassSub, setStudentClassSub] = useState<string>(() => {
+    return localStorage.getItem('tuition_student_class_sub_v1') || 'Class 9';
+  });
+  const [studentSectionSub, setStudentSectionSub] = useState<string>(() => {
+    return localStorage.getItem('tuition_student_section_sub_v1') || 'Section A';
+  });
+  const [showNotifPrefsDropdown, setShowNotifPrefsDropdown] = useState(false);
+  const [notifSoundEnabled, setNotifSoundEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('tuition_notif_sound_v1') !== 'false';
+  });
+  const [toasts, setToasts] = useState<any[]>([]);
+
   // App lock gate password state & functions (Personal Lock)
   const [appGatePassword, setAppGatePassword] = useState(() => {
     return localStorage.getItem('app_gate_password_v1') || 'Mushahid123';
@@ -246,6 +259,151 @@ export default function App() {
     localStorage.setItem('ta_admin', '0');
     alert('Portal Locked successfully!');
   };
+
+  // Refs to track already loaded items
+  const existingIdsRef = React.useRef<Set<number>>(new Set());
+  const isInitialLoadRef = React.useRef(true);
+
+  // Play synthetic pleasant audio chime using native Web Audio API
+  const playChime = () => {
+    if (!notifSoundEnabled) return;
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      const now = ctx.currentTime;
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+      osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+      osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+      
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(now);
+      osc.stop(now + 0.8);
+    } catch (e) {
+      console.warn('Audio play blocked:', e);
+    }
+  };
+
+  // Trigger a beautiful Toast notification
+  const triggerNotification = (type: 'result' | 'class', title: string, message: string, detail: string) => {
+    playChime();
+    const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
+    const newToast = {
+      id,
+      type,
+      title,
+      message,
+      detail,
+      timestamp: new Date()
+    };
+    setToasts(prev => [newToast, ...prev]);
+    
+    // Auto remove after 10 seconds
+    setTimeout(() => {
+      setToasts(prev => prev.filter((t: any) => t.id !== id));
+    }, 10000);
+  };
+
+  // Background poller to check for newly added results or online classes
+  const pollForNewAdditions = async () => {
+    try {
+      // 1. Fetch latest student results (last 10)
+      const { data: latestResults, error: resError } = await supabase
+        .from('student_results')
+        .select('id, studentName, className, examType, marks, grade, createdAt')
+        .order('id', { ascending: false })
+        .limit(10);
+        
+      // 2. Fetch latest online classes (last 10)
+      const { data: latestOnline, error: onlineError } = await supabase
+        .from('online_classes')
+        .select('id, title, teacher, time, created_at')
+        .order('id', { ascending: false })
+        .limit(10);
+
+      if (resError) console.error("Poll results error:", resError);
+      if (onlineError) console.error("Poll classes error:", onlineError);
+
+      if (existingIdsRef.current.size > 0) {
+        if (latestResults) {
+          latestResults.forEach(r => {
+            if (!existingIdsRef.current.has(r.id)) {
+              existingIdsRef.current.add(r.id);
+              // Check if result class matches subscribed student class
+              if (r.className === studentClassSub) {
+                triggerNotification(
+                  'result',
+                  '🏆 New Result Published!',
+                  `Official result published for ${r.studentName} in ${r.className}.`,
+                  `Marks: ${r.marks} | Grade: ${r.grade}`
+                );
+              }
+            }
+          });
+        }
+        
+        if (latestOnline) {
+          latestOnline.forEach(c => {
+            if (!existingIdsRef.current.has(c.id)) {
+              existingIdsRef.current.add(c.id);
+              const { title, section } = parseOnlineTitle(c.title);
+              const matchesSection = !section || section === 'None' || section === studentSectionSub;
+              const matchesClass = title.toLowerCase().includes(studentClassSub.toLowerCase()) || 
+                                   title.toLowerCase().includes(studentClassSub.replace('Class ', '').toLowerCase());
+              
+              if (matchesSection || matchesClass) {
+                triggerNotification(
+                  'class',
+                  '📺 New Live Class Added!',
+                  `"${title}" by ${c.teacher} is now available.`,
+                  `Timing: ${c.time} | Section: ${section || 'General'}`
+                );
+              }
+            }
+          });
+        }
+      } else {
+        // Initialize the tracking ref
+        if (latestResults) latestResults.forEach(r => existingIdsRef.current.add(r.id));
+        if (latestOnline) latestOnline.forEach(c => existingIdsRef.current.add(c.id));
+      }
+    } catch (err) {
+      console.error("Error in background notification poll:", err);
+    }
+  };
+
+  // Sync initial ids once lists are loaded from main state
+  useEffect(() => {
+    if (onlineClasses.length > 0 || resultsList.length > 0) {
+      if (isInitialLoadRef.current) {
+        onlineClasses.forEach(c => existingIdsRef.current.add(c.id));
+        resultsList.forEach(r => existingIdsRef.current.add(r.id));
+        isInitialLoadRef.current = false;
+      }
+    }
+  }, [onlineClasses, resultsList]);
+
+  // Set up periodic automated polling (every 12 seconds)
+  useEffect(() => {
+    // Initial fetch
+    pollForNewAdditions();
+    
+    const interval = setInterval(() => {
+      pollForNewAdditions();
+    }, 12000);
+    
+    return () => clearInterval(interval);
+  }, [studentClassSub, studentSectionSub, notifSoundEnabled]);
 
   useEffect(() => {
     fetchTeachers();
@@ -395,6 +553,16 @@ export default function App() {
       const updated = [newResult, ...resultsList];
       setResultsList(updated);
       localStorage.setItem('tuition_student_results_v1', JSON.stringify(updated));
+    }
+
+    existingIdsRef.current.add(newResult.id);
+    if (newResult.className === studentClassSub) {
+      triggerNotification(
+        'result',
+        '🏆 New Result Published!',
+        `Official result published for ${newResult.studentName} in ${newResult.className}.`,
+        `Marks: ${newResult.marks} | Grade: ${newResult.grade}`
+      );
     }
 
     setResStudentName(''); setResFatherName(''); setResRollNo(''); setResMarks(''); setResPhoto('');
@@ -824,6 +992,20 @@ export default function App() {
       localStorage.setItem('tuition_online_classes_v1', JSON.stringify(updated));
     }
 
+    existingIdsRef.current.add(newC.id);
+    const { title: pTitle, section: pSection } = parseOnlineTitle(newC.title);
+    const matchesSection = !pSection || pSection === 'None' || pSection === studentSectionSub;
+    const matchesClass = pTitle.toLowerCase().includes(studentClassSub.toLowerCase()) || 
+                         pTitle.toLowerCase().includes(studentClassSub.replace('Class ', '').toLowerCase());
+    if (matchesSection || matchesClass) {
+      triggerNotification(
+        'class',
+        '📺 New Live Class Added!',
+        `"${pTitle}" by ${newC.teacher} is now available.`,
+        `Timing: ${newC.time} | Section: ${pSection || 'General'}`
+      );
+    }
+
     setOnlineTitle(''); setOnlineTeacher(''); setOnlineTime(''); setOnlineDate(new Date().toISOString().split('T')[0]); setOnlineLink(''); setOnlineClassImg(''); setOnlineTeacherImg('');
     alert('Online class published successfully to backend database & portal!');
   };
@@ -1035,6 +1217,106 @@ export default function App() {
               <option value="Computer Class">Computer Class</option>
               <option value="Ladies Section">Ladies</option>
             </select>
+          </div>
+
+          {/* Notification settings bell button */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowNotifPrefsDropdown(!showNotifPrefsDropdown)}
+              className="relative w-9 h-9 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold shadow-2xs hover:bg-blue-100 transition duration-200 cursor-pointer"
+              title="Notification Settings"
+            >
+              <Bell size={18} />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[9px] font-extrabold animate-pulse">
+                ✓
+              </span>
+            </button>
+
+            {showNotifPrefsDropdown && (
+              <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-5 text-left animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center justify-between mb-3.5">
+                  <h4 className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+                    <span>🔔</span> Subscription Settings
+                  </h4>
+                  <button 
+                    onClick={() => setShowNotifPrefsDropdown(false)}
+                    className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed mb-4">
+                  Choose your class & section below. You will receive live alerts immediately when results or classes are published for your choice.
+                </p>
+
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">My Class</label>
+                    <select 
+                      value={studentClassSub}
+                      onChange={e => {
+                        setStudentClassSub(e.target.value);
+                        localStorage.setItem('tuition_student_class_sub_v1', e.target.value);
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-800 outline-none cursor-pointer"
+                    >
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">My Section</label>
+                    <select 
+                      value={studentSectionSub}
+                      onChange={e => {
+                        setStudentSectionSub(e.target.value);
+                        localStorage.setItem('tuition_student_section_sub_v1', e.target.value);
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold text-slate-800 outline-none cursor-pointer"
+                    >
+                      <option value="Section A">Section A</option>
+                      <option value="Section B">Section B</option>
+                      <option value="Section C">Section C</option>
+                      <option value="Primary Section">Primary Section</option>
+                      <option value="Middle Section">Middle Section</option>
+                      <option value="High Section">High Section</option>
+                      <option value="Ladies Section">Ladies Section</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs font-semibold text-slate-700">Notification Sound</span>
+                    <button 
+                      onClick={() => {
+                        const nextVal = !notifSoundEnabled;
+                        setNotifSoundEnabled(nextVal);
+                        localStorage.setItem('tuition_notif_sound_v1', String(nextVal));
+                        if (nextVal) playChime();
+                      }}
+                      className={`text-xs px-3 py-1 rounded-full font-bold transition duration-200 cursor-pointer ${notifSoundEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}
+                    >
+                      {notifSoundEnabled ? '🔊 ON' : '🔇 OFF'}
+                    </button>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    triggerNotification(
+                      'result',
+                      '🔔 Test Notification',
+                      `Setup complete for ${studentClassSub} (${studentSectionSub}).`,
+                      `You're now ready to receive automated updates!`
+                    );
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl text-xs transition duration-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  Send Test Toast
+                </button>
+              </div>
+            )}
           </div>
 
           <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition" title="WhatsApp Chat">
@@ -1523,6 +1805,58 @@ export default function App() {
             </div>
           </div>
 
+          {/* Subscribed Section Status Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-5 rounded-3xl mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
+            <div className="flex items-start gap-3.5">
+              <div className="p-3 bg-white text-blue-600 rounded-2xl shadow-3xs text-xl shrink-0">
+                📺
+              </div>
+              <div className="text-left">
+                <h3 className="font-extrabold text-slate-900 text-sm">Automated Live Class Alerts</h3>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  You are registered to receive live audio & toast notifications for classes matching <b className="text-blue-700 bg-blue-100/50 px-2 py-0.5 rounded-lg">{studentClassSub}</b> or <b className="text-blue-700 bg-blue-100/50 px-2 py-0.5 rounded-lg">{studentSectionSub}</b>.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 flex-wrap md:flex-nowrap">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-500">Class:</span>
+                <select 
+                  value={studentClassSub}
+                  onChange={e => {
+                    setStudentClassSub(e.target.value);
+                    localStorage.setItem('tuition_student_class_sub_v1', e.target.value);
+                  }}
+                  className="bg-white border border-slate-200 p-2 rounded-xl text-xs font-bold text-slate-800 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/10 transition"
+                >
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-500">Section:</span>
+                <select 
+                  value={studentSectionSub}
+                  onChange={e => {
+                    setStudentSectionSub(e.target.value);
+                    localStorage.setItem('tuition_student_section_sub_v1', e.target.value);
+                  }}
+                  className="bg-white border border-slate-200 p-2 rounded-xl text-xs font-bold text-slate-800 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/10 transition"
+                >
+                  <option value="Section A">Section A</option>
+                  <option value="Section B">Section B</option>
+                  <option value="Section C">Section C</option>
+                  <option value="Primary Section">Primary Section</option>
+                  <option value="Middle Section">Middle Section</option>
+                  <option value="High Section">High Section</option>
+                  <option value="Ladies Section">Ladies Section</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           {selectedSectionFilter !== 'all' && (
             <div className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between text-blue-800 text-sm">
               <div className="flex items-center gap-2">
@@ -1885,6 +2219,36 @@ export default function App() {
           <div className="mb-8 text-center">
             <span className="bg-blue-50 text-blue-600 px-3.5 py-1.5 rounded-full text-xs font-semibold inline-block mb-2">Academic Performance</span>
             <h1 className="text-3xl font-bold text-slate-900">Student Results Portal</h1>
+          </div>
+
+          {/* Subscribed Class Status Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-5 rounded-3xl mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
+            <div className="flex items-start gap-3.5">
+              <div className="p-3 bg-white text-blue-600 rounded-2xl shadow-3xs text-xl shrink-0">
+                🏆
+              </div>
+              <div className="text-left">
+                <h3 className="font-extrabold text-slate-900 text-sm">Automated Result Alerts</h3>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                  You are registered to receive live audio & toast notifications for results in <b className="text-blue-700 bg-blue-100/50 px-2 py-0.5 rounded-lg">{studentClassSub}</b>.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-bold text-slate-500">Change Sub:</span>
+              <select 
+                value={studentClassSub}
+                onChange={e => {
+                  setStudentClassSub(e.target.value);
+                  localStorage.setItem('tuition_student_class_sub_v1', e.target.value);
+                }}
+                className="bg-white border border-slate-200 p-2 rounded-xl text-xs font-bold text-slate-800 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/10 transition"
+              >
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <option key={i + 1} value={`Class ${i + 1}`}>Class {i + 1}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {isAdmin && (
@@ -3057,6 +3421,43 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Toast Notifications Container */}
+      <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+        {toasts.map((t: any) => (
+          <div 
+            key={t.id} 
+            className="pointer-events-auto w-full bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col animate-in slide-in-from-right duration-300 select-none hover:shadow-2xl transition duration-200"
+          >
+            <div className="p-4 flex gap-3 items-start">
+              <div className={`p-2.5 rounded-xl shrink-0 ${t.type === 'result' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
+                {t.type === 'result' ? '🏆' : '📺'}
+              </div>
+              <div className="flex-1 text-left">
+                <div className="flex justify-between items-start gap-1">
+                  <h4 className="font-extrabold text-slate-900 text-sm">{t.title}</h4>
+                  <button 
+                    onClick={() => setToasts(prev => prev.filter((item: any) => item.id !== t.id))}
+                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg shrink-0 transition cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <p className="text-xs font-semibold text-slate-700 mt-0.5">{t.message}</p>
+                <p className="text-[10px] text-slate-500 mt-1 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 inline-block font-mono">
+                  {t.detail}
+                </p>
+              </div>
+            </div>
+            {/* Visual Progress Bar (ticking down) */}
+            <div className="h-1 bg-slate-100 w-full overflow-hidden">
+              <div 
+                className={`h-full ${t.type === 'result' ? 'bg-amber-500' : 'bg-indigo-500'} animate-toast-progress`}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

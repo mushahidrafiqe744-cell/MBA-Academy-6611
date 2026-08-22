@@ -111,6 +111,43 @@ export default function ComputerSection({
   const [preferredBatch, setPreferredBatch] = useState('Afternoon (3 PM - 5 PM)');
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  // Inner navbar section active state & scroll spy
+  const [activeSection, setActiveSection] = useState('comp-overview');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['comp-overview', 'comp-courses', 'comp-batches', 'comp-teachers', 'comp-lectures', 'comp-enquiry'];
+      const scrollPosition = window.scrollY + 180; // offset for sticky navbars
+
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const topOffset = el.getBoundingClientRect().top + window.scrollY - 145; // account for main nav + inner nav
+      window.scrollTo({
+        top: topOffset,
+        behavior: 'smooth'
+      });
+      setActiveSection(id);
+    }
+  };
+
   // Courses static details
   const courses = {
     office: {
@@ -220,6 +257,61 @@ export default function ComputerSection({
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
+      {/* Dynamic Inner Sticky Navbar for Computer Subsections */}
+      <div className="sticky top-[73px] z-40 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl p-2.5 mb-10 shadow-md flex items-center justify-between gap-4 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none w-full md:w-auto">
+          <button 
+            onClick={() => scrollToSection('comp-overview')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-overview' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+          >
+            <Laptop size={14} /> Overview
+          </button>
+          <button 
+            onClick={() => scrollToSection('comp-courses')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-courses' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+          >
+            <BookOpen size={14} /> Courses
+          </button>
+          <button 
+            onClick={() => scrollToSection('comp-batches')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-batches' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+          >
+            <Clock size={14} /> Timings
+          </button>
+          <button 
+            onClick={() => scrollToSection('comp-teachers')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-teachers' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+          >
+            <Users size={14} /> Instructors
+          </button>
+          <button 
+            onClick={() => scrollToSection('comp-lectures')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-lectures' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+          >
+            <Video size={14} /> Lectures
+          </button>
+          <button 
+            onClick={() => scrollToSection('comp-enquiry')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-enquiry' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+          >
+            <MessageSquare size={14} /> Admission Enquiry
+          </button>
+        </div>
+
+        {/* Quick Action Button */}
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
+          <span className="text-[9px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-md animate-pulse">
+            New Batches Open
+          </span>
+          <button 
+            onClick={() => scrollToSection('comp-enquiry')}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black tracking-tight px-4 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+          >
+            💬 Reserve Seat
+          </button>
+        </div>
+      </div>
+
       {/* 🔴 Live Google Meet Class Action Banner */}
       {isLiveActive && (
         <div className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 rounded-3xl p-5 md:p-6 text-white flex flex-col md:flex-row items-center justify-between gap-5 mb-10 shadow-lg border border-rose-500/20 animate-pulse">
@@ -247,7 +339,7 @@ export default function ComputerSection({
       )}
 
       {/* 1. Header Hero Area */}
-      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden mb-12">
+      <div id="comp-overview" className="scroll-mt-32 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden mb-12">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         
@@ -264,12 +356,18 @@ export default function ComputerSection({
             </p>
             
             <div className="flex flex-wrap gap-4">
-              <a href="#courses" className="bg-white text-indigo-950 hover:bg-slate-100 font-bold px-6 py-3 rounded-xl shadow-lg text-xs transition flex items-center gap-1.5">
+              <button 
+                onClick={() => scrollToSection('comp-courses')}
+                className="bg-white text-indigo-950 hover:bg-slate-100 font-bold px-6 py-3 rounded-xl shadow-lg text-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
                 <BookOpen size={15} /> View Course Catalog
-              </a>
-              <a href="#enquiry" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg text-xs transition flex items-center gap-1.5">
+              </button>
+              <button 
+                onClick={() => scrollToSection('comp-enquiry')}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg text-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
                 <MessageSquare size={15} /> Request Free Assessment
-              </a>
+              </button>
             </div>
           </div>
 
@@ -375,7 +473,7 @@ export default function ComputerSection({
       </div>
 
       {/* 3. Interactive Courses Catalog */}
-      <div id="courses" className="scroll-mt-6 mb-16">
+      <div id="comp-courses" className="scroll-mt-32 mb-16">
         <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-black text-slate-900">Explore Our Featured Computer Courses</h2>
           <p className="text-xs text-slate-500 mt-2 max-w-lg mx-auto">Click on the tabs below to explore the detailed modules, eligibility criteria, and fee structures of each IT class.</p>
@@ -475,9 +573,9 @@ export default function ComputerSection({
             <button 
               onClick={() => {
                 setEnquiryCourse(courses[activeCourseTab].title);
-                document.getElementById('enquiry')?.scrollIntoView({ behavior: 'smooth' });
+                scrollToSection('comp-enquiry');
               }}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-md text-xs transition flex items-center justify-center gap-2"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-md text-xs transition flex items-center justify-center gap-2 cursor-pointer"
             >
               Secure Your Slot Now <ArrowRight size={14} />
             </button>
@@ -486,7 +584,7 @@ export default function ComputerSection({
       </div>
 
       {/* 4. Batch Timings & Direct WhatsApp Booking */}
-      <div className="bg-indigo-50/60 border border-indigo-100 rounded-3xl p-6 md:p-10 mb-16">
+      <div id="comp-batches" className="scroll-mt-32 bg-indigo-50/60 border border-indigo-100 rounded-3xl p-6 md:p-10 mb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7">
             <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-600 bg-indigo-100/60 px-3 py-1 rounded-full inline-block mb-3">Flexible Timings</span>
@@ -567,7 +665,7 @@ export default function ComputerSection({
       </div>
 
       {/* 5. Teachers Filter (Computer Department) */}
-      <div className="mb-16">
+      <div id="comp-teachers" className="scroll-mt-32 mb-16">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-slate-900">Meet Our IT & Computer Teachers</h2>
@@ -632,7 +730,7 @@ export default function ComputerSection({
       </div>
 
       {/* 6. Active Online Lectures (Computer Section) */}
-      <div className="mb-16">
+      <div id="comp-lectures" className="scroll-mt-32 mb-16">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-slate-900 font-extrabold">Computer Online Lectures & Classes</h2>
@@ -831,7 +929,7 @@ export default function ComputerSection({
       </div>
 
       {/* 7. Quick Admission Enquiry Form */}
-      <div id="enquiry" className="scroll-mt-6 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white rounded-3xl p-6 md:p-12 shadow-xl border border-indigo-800">
+      <div id="comp-enquiry" className="scroll-mt-32 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white rounded-3xl p-6 md:p-12 shadow-xl border border-indigo-800">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-6">
             <span className="text-indigo-300 font-bold text-xs uppercase tracking-widest bg-indigo-800/60 border border-indigo-700 px-3 py-1 rounded-full inline-block mb-3">Admission Inquiry</span>
