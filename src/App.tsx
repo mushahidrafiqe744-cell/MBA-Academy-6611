@@ -67,32 +67,32 @@ const compressImage = (file: File, maxWidth = 600, maxHeight = 600, quality = 0.
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState(() => {
-    const path = window.location.pathname.replace(/^\/+/g, '');
+    const hash = window.location.hash.replace(/^#\/?/g, '');
     const validPages = ['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
-    return (path && validPages.includes(path)) ? path : 'home';
+    return (hash && validPages.includes(hash)) ? hash : 'home';
   });
 
-  // Handle browser back/forward buttons (popstate event)
+  // Handle browser back/forward buttons (hashchange event)
   useEffect(() => {
     const validPages = ['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
-    const handlePopState = () => {
-      const updatedPath = window.location.pathname.replace(/^\/+/g, '');
-      if (updatedPath && validPages.includes(updatedPath)) {
-        setCurrentPage(updatedPath);
-      } else {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#\/?/g, '');
+      if (hash && validPages.includes(hash)) {
+        setCurrentPage(hash);
+      } else if (!window.location.hash) {
         setCurrentPage('home');
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Update URL path whenever currentPage changes
+  // Update URL hash whenever currentPage changes
   useEffect(() => {
-    const currentPath = window.location.pathname.replace(/^\/+/g, '');
-    if (currentPath !== currentPage) {
-      window.history.pushState(null, '', `/${currentPage}`);
+    const hash = window.location.hash.replace(/^#\/?/g, '');
+    if (hash !== currentPage) {
+      window.location.hash = currentPage;
     }
   }, [currentPage]);
 
