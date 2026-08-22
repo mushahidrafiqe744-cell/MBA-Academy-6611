@@ -16,6 +16,55 @@ import ComputerSection from './components/ComputerSection';
 
 const ADMIN_PASS = 'King6611';
 
+// Compress uploaded image files using canvas to avoid local storage quota limits and payload too large (404/413) server errors
+const compressImage = (file: File, maxWidth = 600, maxHeight = 600, quality = 0.7): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions keeping aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(event.target?.result as string);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        // Extract compressed JPEG
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedBase64);
+      };
+      img.onerror = (err) => {
+        reject(err);
+      };
+    };
+    reader.onerror = (err) => {
+      reject(err);
+    };
+  });
+};
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState(() => {
     const path = window.location.pathname.replace(/^\/+/g, '');
@@ -796,39 +845,59 @@ export default function App() {
     alert(`"${c.title}" is now LIVE! Moved to Live Sessions.`);
   };
 
-  const handleOnlineClassImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOnlineClassImgFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setOnlineClassImg(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 600, 400, 0.7);
+        setOnlineClassImg(compressed);
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => setOnlineClassImg(reader.result as string);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
-  const handleOnlineTeacherImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOnlineTeacherImgFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setOnlineTeacherImg(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 400, 400, 0.7);
+        setOnlineTeacherImg(compressed);
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => setOnlineTeacherImg(reader.result as string);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
-  const handleUpClassImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpClassImgFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setUpClassImg(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 600, 400, 0.7);
+        setUpClassImg(compressed);
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => setUpClassImg(reader.result as string);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
-  const handleUpTeacherImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpTeacherImgFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setUpTeacherImg(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 400, 400, 0.7);
+        setUpTeacherImg(compressed);
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => setUpTeacherImg(reader.result as string);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -1099,12 +1168,18 @@ export default function App() {
     setSelectedClassForAttendance(admClass);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setAdmPhoto(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 500, 500, 0.7);
+        setAdmPhoto(compressed);
+      } catch (err) {
+        console.error("Error compressing admission photo, falling back:", err);
+        const reader = new FileReader();
+        reader.onload = () => setAdmPhoto(reader.result as string);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -1525,12 +1600,17 @@ export default function App() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Teacher Photo Upload</label>
-                  <input type="file" accept="image/*" onChange={(e) => {
+                  <input type="file" accept="image/*" onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      const reader = new FileReader();
-                      reader.onload = () => setTImg(reader.result as string);
-                      reader.readAsDataURL(file);
+                      try {
+                        const compressed = await compressImage(file, 400, 400, 0.7);
+                        setTImg(compressed);
+                      } catch (err) {
+                        const reader = new FileReader();
+                        reader.onload = () => setTImg(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
                     }
                   }} className="text-xs text-slate-500" />
                 </div>
@@ -2285,16 +2365,21 @@ export default function App() {
                 <div>
                   <label className="text-xs font-semibold text-amber-900 block mb-1">Upload Student Photo / Paste URL</label>
                   <div className="flex gap-2 items-center">
-                    <input type="file" accept="image/*" onChange={(e) => {
+                    <input type="file" accept="image/*" onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          if (event.target?.result) {
-                            setResPhoto(event.target.result as string);
-                          }
-                        };
-                        reader.readAsDataURL(file);
+                        try {
+                          const compressed = await compressImage(file, 400, 400, 0.7);
+                          setResPhoto(compressed);
+                        } catch (err) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            if (event.target?.result) {
+                              setResPhoto(event.target.result as string);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
                       }
                     }} className="bg-white p-2 rounded-xl border border-amber-200 text-xs text-slate-600 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 flex-1" />
                     {resPhoto && <span className="text-xs text-emerald-700 font-bold shrink-0">✓ Photo Loaded</span>}
@@ -2835,18 +2920,26 @@ export default function App() {
                     accept="image/*" 
                     id="academyLogoUpload" 
                     className="hidden" 
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          const base64 = reader.result as string;
+                        try {
+                          const base64 = await compressImage(file, 400, 400, 0.85);
                           localStorage.setItem('tuition_academy_logo_v1', base64);
                           setAcademyLogo(base64);
-                          setLogoError(false); // Reset error state to try loading new logo
+                          setLogoError(false);
                           alert('Academy Logo updated successfully!');
-                        };
-                        reader.readAsDataURL(file);
+                        } catch (err) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            const base64 = reader.result as string;
+                            localStorage.setItem('tuition_academy_logo_v1', base64);
+                            setAcademyLogo(base64);
+                            setLogoError(false); // Reset error state to try loading new logo
+                            alert('Academy Logo updated successfully!');
+                          };
+                          reader.readAsDataURL(file);
+                        }
                       }
                     }} 
                   />
@@ -2908,17 +3001,24 @@ export default function App() {
                     accept="image/*" 
                     id="heroBgUpload" 
                     className="hidden" 
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          const base64 = reader.result as string;
+                        try {
+                          const base64 = await compressImage(file, 1200, 800, 0.7);
                           localStorage.setItem('tuition_hero_bg_v2', base64);
                           setHeroBg(base64);
                           alert('Homepage background updated successfully!');
-                        };
-                        reader.readAsDataURL(file);
+                        } catch (err) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            const base64 = reader.result as string;
+                            localStorage.setItem('tuition_hero_bg_v2', base64);
+                            setHeroBg(base64);
+                            alert('Homepage background updated successfully!');
+                          };
+                          reader.readAsDataURL(file);
+                        }
                       }
                     }} 
                   />
@@ -2982,17 +3082,24 @@ export default function App() {
                       accept="image/*" 
                       id="admissionBgUpload" 
                       className="hidden" 
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            const base64 = reader.result as string;
+                          try {
+                            const base64 = await compressImage(file, 800, 800, 0.7);
                             localStorage.setItem('tuition_admission_bg_v2', base64);
                             setAdmissionBg(base64);
                             alert('Admission Form background updated successfully!');
-                          };
-                          reader.readAsDataURL(file);
+                          } catch (err) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const base64 = reader.result as string;
+                              localStorage.setItem('tuition_admission_bg_v2', base64);
+                              setAdmissionBg(base64);
+                              alert('Admission Form background updated successfully!');
+                            };
+                            reader.readAsDataURL(file);
+                          }
                         }
                       }} 
                     />
