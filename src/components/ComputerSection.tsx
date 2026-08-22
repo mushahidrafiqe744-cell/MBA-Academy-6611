@@ -262,52 +262,52 @@ export default function ComputerSection({
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none w-full md:w-auto">
           <button 
             onClick={() => scrollToSection('comp-overview')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-overview' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-1.5 shrink-0 cursor-pointer ${activeSection === 'comp-overview' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
           >
             <Laptop size={14} /> Overview
           </button>
           <button 
             onClick={() => scrollToSection('comp-courses')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-courses' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-1.5 shrink-0 cursor-pointer ${activeSection === 'comp-courses' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
           >
             <BookOpen size={14} /> Courses
           </button>
           <button 
             onClick={() => scrollToSection('comp-batches')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-batches' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-1.5 shrink-0 cursor-pointer ${activeSection === 'comp-batches' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
           >
             <Clock size={14} /> Timings
           </button>
           <button 
             onClick={() => scrollToSection('comp-teachers')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-teachers' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-1.5 shrink-0 cursor-pointer ${activeSection === 'comp-teachers' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
           >
-            <Users size={14} /> Instructors
+            <Users size={14} /> Teachers
           </button>
           <button 
             onClick={() => scrollToSection('comp-lectures')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-lectures' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-1.5 shrink-0 cursor-pointer ${activeSection === 'comp-lectures' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
           >
             <Video size={14} /> Lectures
           </button>
           <button 
             onClick={() => scrollToSection('comp-enquiry')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-2 shrink-0 cursor-pointer ${activeSection === 'comp-enquiry' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
+            className={`px-3 py-2 rounded-xl text-xs font-black tracking-tight transition flex items-center gap-1.5 shrink-0 cursor-pointer ${activeSection === 'comp-enquiry' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'}`}
           >
-            <MessageSquare size={14} /> Admission Enquiry
+            <MessageSquare size={14} /> Enquiry
           </button>
         </div>
 
         {/* Quick Action Button */}
         <div className="hidden lg:flex items-center gap-2 shrink-0">
-          <span className="text-[9px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-md animate-pulse">
-            New Batches Open
+          <span className="text-[9px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md animate-pulse">
+            Active
           </span>
           <button 
             onClick={() => scrollToSection('comp-enquiry')}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black tracking-tight px-4 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black tracking-tight px-3 py-1.5 rounded-xl transition shadow-xs flex items-center gap-1 cursor-pointer"
           >
-            💬 Reserve Seat
+            💬 Book Now
           </button>
         </div>
       </div>
