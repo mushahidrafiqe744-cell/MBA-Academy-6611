@@ -1159,9 +1159,13 @@ export default function App() {
 
     alert('Admission submitted successfully! Student added to attendance list.');
 
-    // WhatsApp notification
+    // WhatsApp notification wrapped in try/catch to avoid iframe / sandbox popup block crash
     const waText = `New Admission Request:\nStudent: ${admStudentName}\nClass: ${admClass}\nRoll No: ${admRoll}\nPhone: ${admPhone}`;
-    window.open(`https://wa.me/923290725117?text=${encodeURIComponent(waText)}`, '_blank');
+    try {
+      window.open(`https://wa.me/923290725117?text=${encodeURIComponent(waText)}`, '_blank');
+    } catch (e) {
+      console.warn("WhatsApp popup was blocked or failed to open:", e);
+    }
 
     setAdmStudentName(''); setAdmParentName(''); setAdmEmail(''); setAdmPhone(''); setAdmRoll(''); setAdmAddress(''); setAdmPhoto('');
     setCurrentPage('attendance');
@@ -1818,9 +1822,9 @@ export default function App() {
                     <b className="block text-sm text-slate-900">Student Photo</b>
                     <span className="text-xs text-slate-500 block mb-2">Upload JPG/PNG</span>
                     <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" id="photoFile" />
-                    <button type="button" onClick={() => document.getElementById('photoFile')?.click()} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                    <label htmlFor="photoFile" className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer inline-block">
                       Upload Photo
-                    </button>
+                    </label>
                   </div>
                 </div>
 
@@ -1988,9 +1992,9 @@ export default function App() {
                       </div>
                     </div>
                     <input type="file" accept="image/*" onChange={handleOnlineClassImgFile} className="hidden" id="liveClassImgFile" />
-                    <button type="button" onClick={() => document.getElementById('liveClassImgFile')?.click()} className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                    <label htmlFor="liveClassImgFile" className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer inline-block">
                       Upload Image
-                    </button>
+                    </label>
                   </div>
 
                   <div className="bg-white p-3 rounded-xl border border-amber-200 flex items-center justify-between gap-3">
@@ -2004,9 +2008,9 @@ export default function App() {
                       </div>
                     </div>
                     <input type="file" accept="image/*" onChange={handleOnlineTeacherImgFile} className="hidden" id="liveTeacherImgFile" />
-                    <button type="button" onClick={() => document.getElementById('liveTeacherImgFile')?.click()} className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                    <label htmlFor="liveTeacherImgFile" className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer inline-block">
                       Upload Photo
-                    </button>
+                    </label>
                   </div>
                 </div>
                 <button type="submit" className="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-xl text-xs">Publish Live Class</button>
@@ -2031,9 +2035,9 @@ export default function App() {
                       </div>
                     </div>
                     <input type="file" accept="image/*" onChange={handleUpClassImgFile} className="hidden" id="upClassImgFile" />
-                    <button type="button" onClick={() => document.getElementById('upClassImgFile')?.click()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                    <label htmlFor="upClassImgFile" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer inline-block">
                       Upload Image
-                    </button>
+                    </label>
                   </div>
 
                   <div className="bg-white p-3 rounded-xl border border-indigo-200 flex items-center justify-between gap-3">
@@ -2047,9 +2051,9 @@ export default function App() {
                       </div>
                     </div>
                     <input type="file" accept="image/*" onChange={handleUpTeacherImgFile} className="hidden" id="upTeacherImgFile" />
-                    <button type="button" onClick={() => document.getElementById('upTeacherImgFile')?.click()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                    <label htmlFor="upTeacherImgFile" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer inline-block">
                       Upload Photo
-                    </button>
+                    </label>
                   </div>
                 </div>
                 <button type="submit" className="bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl text-xs">Schedule Upcoming Session</button>
@@ -2943,12 +2947,12 @@ export default function App() {
                       }
                     }} 
                   />
-                  <button 
-                    onClick={() => document.getElementById('academyLogoUpload')?.click()} 
+                  <label 
+                    htmlFor="academyLogoUpload" 
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <span>📁</span> Upload Custom Logo
-                  </button>
+                  </label>
                   {academyLogo !== '/logo.jpg' && (
                     <button 
                       onClick={() => {
@@ -3023,12 +3027,12 @@ export default function App() {
                     }} 
                   />
                   <div className="flex gap-2 w-full sm:w-auto">
-                    <button 
-                      onClick={() => document.getElementById('heroBgUpload')?.click()} 
+                    <label 
+                      htmlFor="heroBgUpload" 
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer flex-1 sm:flex-initial justify-center"
                     >
                       <span>📁</span> Upload Image
-                    </button>
+                    </label>
                     {heroBg !== "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80" && (
                       <button 
                         onClick={() => {
@@ -3104,12 +3108,12 @@ export default function App() {
                       }} 
                     />
                     <div className="flex gap-2 w-full sm:w-auto">
-                      <button 
-                        onClick={() => document.getElementById('admissionBgUpload')?.click()} 
+                      <label 
+                        htmlFor="admissionBgUpload" 
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer flex-1 sm:flex-initial justify-center"
                       >
                         <span>📁</span> Upload Custom Image
-                      </button>
+                      </label>
                       {admissionBg !== "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80" && (
                         <button 
                           onClick={() => {
