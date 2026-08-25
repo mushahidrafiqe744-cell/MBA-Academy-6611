@@ -13,6 +13,9 @@ import {
   Monitor, Terminal, Cpu, Laptop, Shield, Bell
 } from 'lucide-react';
 import ComputerSection from './components/ComputerSection';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ADMIN_PASS = 'King6611';
 
@@ -192,7 +195,7 @@ export default function App() {
 
   // Professional Ad Customization states
   const [adTitle, setAdTitle] = useState(() => {
-    return localStorage.getItem('tuition_ad_title_v1') || 'MBA ACADEMY';
+    return localStorage.getItem('tuition_ad_title_v1') || 'KIPS COLLEGE';
   });
   const [adSub, setAdSub] = useState(() => {
     return localStorage.getItem('tuition_ad_sub_v1') || 'CLASSES 1 TO 10 • QUALITY EDUCATION & PROFESSIONAL COACHING';
@@ -1251,8 +1254,8 @@ export default function App() {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-xl text-blue-950 tracking-tight">MBA</span>
-              <span className="font-extrabold text-xl text-blue-600 tracking-tight">Academy</span>
+              <span className="font-extrabold text-xl text-blue-950 tracking-tight">KIPS</span>
+              <span className="font-extrabold text-xl text-blue-600 tracking-tight">College</span>
             </div>
             <p className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase">Excellence in Education</p>
           </div>
@@ -1808,7 +1811,7 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-8 text-xs text-white/70 font-bold drop-shadow-sm">MBA Academy System v2.6</div>
+                <div className="mt-8 text-xs text-white/70 font-bold drop-shadow-sm">KIPS College System v2.6</div>
               </div>
             </div>
 
@@ -2214,7 +2217,7 @@ export default function App() {
                     </div>
 
                     <div className="flex justify-between items-end z-10">
-                      <div className="text-[11px] text-blue-200 font-medium opacity-90">MBA Academy Live</div>
+                      <div className="text-[11px] text-blue-200 font-medium opacity-90">KIPS College Live</div>
                       <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/25 flex items-center gap-1.5">
                         <span>⏱️ 30 Min</span>
                       </div>
@@ -2548,6 +2551,48 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Performance Comparison Bar Chart */}
+              <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl mb-8">
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    📊 Performance Comparison (Student vs Class Average)
+                  </h3>
+                  <span className="text-xs font-semibold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">Academic Benchmarking</span>
+                </div>
+                <div className="h-52 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={[
+                        {
+                          name: 'Student Score',
+                          marks: Number(searchedResult.marksObtained ?? parseInt(String(searchedResult.marks).split('/')[0]) ?? 450),
+                          fill: '#2563eb'
+                        },
+                        {
+                          name: 'Class Average',
+                          marks: Math.round(Number(searchedResult.totalMarks || 500) * 0.72),
+                          fill: '#10b981'
+                        },
+                        {
+                          name: 'Maximum Total',
+                          marks: Number(searchedResult.totalMarks || 500),
+                          fill: '#f59e0b'
+                        },
+                      ]}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="name" tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }} />
+                      <YAxis tick={{ fill: '#475569', fontSize: 12 }} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', fontWeight: 'bold' }}
+                      />
+                      <Bar dataKey="marks" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
               {/* Remarks Box */}
               <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-8 text-sm">
                 <b className="text-amber-900 block mb-1">Teacher's Remarks & Evaluation:</b>
@@ -2568,7 +2613,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Print Button for Students */}
+              {/* Print & PDF Download Buttons for Students */}
               <div className="text-center mt-6 pt-4 border-t border-slate-200 print:hidden flex flex-wrap justify-center gap-4">
                 <button onClick={() => {
                   const cardElement = document.getElementById('official-results-card');
@@ -2582,7 +2627,7 @@ export default function App() {
                     printWindow.document.write(`
                       <html>
                         <head>
-                          <title>MBA Academy - Official Results Card (${searchedResult.studentName})</title>
+                          <title>KIPS College - Official Results Card (${searchedResult.studentName})</title>
                           <script src="https://cdn.tailwindcss.com"></script>
                         </head>
                         <body class="p-8 bg-white text-slate-800 font-sans">
@@ -2597,8 +2642,40 @@ export default function App() {
                   } else {
                     window.print();
                   }
-                }} className="bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 mx-auto text-sm transition transform hover:scale-105">
-                  🖨️ Print / Download Results Card
+                }} className="bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-800 hover:to-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm transition transform hover:scale-105 cursor-pointer">
+                  🖨️ Print Results Card
+                </button>
+
+                <button onClick={async () => {
+                  const cardElement = document.getElementById('official-results-card');
+                  if (!cardElement) return;
+                  try {
+                    const canvas = await html2canvas(cardElement, { scale: 2, useCORS: true, logging: false });
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 210;
+                    const pageHeight = 295;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+
+                    while (heightLeft >= 0) {
+                      position = heightLeft - imgHeight;
+                      pdf.addPage();
+                      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                      heightLeft -= pageHeight;
+                    }
+
+                    pdf.save(`KIPS_Result_${searchedResult?.studentName || 'Card'}.pdf`);
+                  } catch (err) {
+                    console.error("Error generating PDF:", err);
+                    alert("Failed to generate PDF. Please try printing instead.");
+                  }
+                }} className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm transition transform hover:scale-105 cursor-pointer">
+                  📥 Download as PDF
                 </button>
               </div>
             </motion.div>
@@ -2738,11 +2815,11 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="text-center mb-10">
             <span className="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider inline-block mb-3">Official Advertisement & Poster</span>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">MBA Academy Admission Poster 2026</h1>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">KIPS College Admission Poster 2026</h1>
             <p className="text-sm text-slate-600 mt-2 max-w-xl mx-auto">Preview and share our professional coaching admission ad. Print or download for distribution.</p>
           </div>
 
-          <div className="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white rounded-3xl p-8 md:p-14 shadow-2xl border-4 border-amber-400 relative overflow-hidden">
+          <div id="official-ad-poster" className="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white rounded-3xl p-8 md:p-14 shadow-2xl border-4 border-amber-400 relative overflow-hidden">
             {/* Background design accents */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -2788,7 +2865,7 @@ export default function App() {
                             localStorage.setItem('tuition_ad_cards_v1', JSON.stringify(updated));
                           }
                         }}
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-red-600 hover:bg-red-700 text-white rounded p-1 text-[10px] transition cursor-pointer"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-red-600 hover:bg-red-700 text-white rounded p-1 text-[10px] transition cursor-pointer print:hidden"
                         title="Delete Card"
                       >
                         ❌
@@ -2813,11 +2890,58 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-4 mt-8">
-            <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition">
+          <div className="flex justify-center gap-4 mt-8 print:hidden">
+            <button onClick={() => {
+              const posterEl = document.getElementById('official-ad-poster');
+              const printWindow = window.open('', '_blank');
+              if (printWindow && posterEl) {
+                const clone = posterEl.cloneNode(true) as HTMLElement;
+                const deleteBtns = clone.querySelectorAll('button');
+                deleteBtns.forEach(btn => btn.remove());
+
+                printWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>KIPS College - Official Admission Poster 2026</title>
+                      <script src="https://cdn.tailwindcss.com"></script>
+                      <style>
+                        @media print {
+                          body {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            color-adjust: exact !important;
+                            background-color: #022c22 !important;
+                            margin: 0;
+                            padding: 20px;
+                          }
+                          *, ::before, ::after {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            color-adjust: exact !important;
+                          }
+                        }
+                      </style>
+                    </head>
+                    <body class="bg-emerald-950 p-6 flex items-center justify-center min-h-screen">
+                      <div class="w-full max-w-4xl mx-auto">
+                        ${clone.outerHTML}
+                      </div>
+                      <script>
+                        window.onload = () => {
+                          setTimeout(() => { window.print(); }, 500);
+                        };
+                      </script>
+                    </body>
+                  </html>
+                `);
+                printWindow.document.close();
+              } else {
+                window.print();
+              }
+            }} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition cursor-pointer">
               🖨️ Print / Save Poster as PDF
             </button>
-            <a href="https://wa.me/?text=Admissions%20Open%20at%20MBA%20Academy%20for%20Classes%201%20to%2010!%20Call%2003290725117" target="_blank" rel="noreferrer" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition">
+            <a href="https://wa.me/?text=Admissions%20Open%20at%20KIPS%20College%20for%20Classes%201%20to%2010!%20Call%2003290725117" target="_blank" rel="noreferrer" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition">
               💬 Share Ad on WhatsApp
             </a>
           </div>
@@ -2914,7 +3038,7 @@ export default function App() {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-900 text-base">Academy Logo Settings</h3>
-                    <p className="text-xs text-slate-600 mt-0.5">Upload a professional logo for MBA Academy. It will instantly update across the Navbar, Footer, and Professional Ad Poster!</p>
+                    <p className="text-xs text-slate-600 mt-0.5">Upload a professional logo for KIPS College. It will instantly update across the Navbar, Footer, and Professional Ad Poster!</p>
                   </div>
                 </div>
                 
@@ -3449,7 +3573,7 @@ export default function App() {
                   <GraduationCap className="w-5 h-5 text-blue-600" />
                 )}
               </div>
-              <b className="text-white text-lg font-bold">MBA Academy</b>
+              <b className="text-white text-lg font-bold">KIPS College</b>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">Class 1 to 10 - Quality Education & Professional Coaching. Admissions Open. Contact: 03290725117</p>
           </div>
@@ -3470,7 +3594,7 @@ export default function App() {
             <b className="text-white text-sm block mb-3">Contact Info</b>
             <a href="tel:+923290725117" className="text-xs block mb-2 text-slate-300 hover:text-white">📞 03290725117</a>
             <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="text-xs block mb-2 text-emerald-400 font-semibold">💬 WhatsApp Support</a>
-            <span className="text-xs block text-slate-500 mt-4">© 2026 MBA Academy. All rights reserved.</span>
+            <span className="text-xs block text-slate-500 mt-4">© 2026 KIPS College. All rights reserved.</span>
           </div>
         </div>
       </footer>
