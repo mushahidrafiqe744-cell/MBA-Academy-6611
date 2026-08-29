@@ -244,13 +244,13 @@ export default function ComputerSection({
 
   // Generate WhatsApp Message
   const handleWhatsAppEnquiry = () => {
-    const message = `Hello KIPS College, I want to join the Computer Course!\n\n*Details:*\n👤 Name: ${studentName || 'Student'}\n📞 WhatsApp: ${studentPhone}\n👶 Age: ${studentAge || 'N/A'}\n💻 Selected Course: ${enquiryCourse}\n⏰ Preferred Batch: ${preferredBatch}\n\nPlease reserve my seat! Thanks.`;
+    const message = `Hello MBA Academy, I want to join the Computer Course!\n\n*Details:*\n👤 Name: ${studentName || 'Student'}\n📞 WhatsApp: ${studentPhone}\n👶 Age: ${studentAge || 'N/A'}\n💻 Selected Course: ${enquiryCourse}\n⏰ Preferred Batch: ${preferredBatch}\n\nPlease reserve my seat! Thanks.`;
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/923290725117?text=${encoded}`, '_blank');
   };
 
   const handleWhatsAppDirectBooking = () => {
-    const message = `Hello KIPS College, I would like to book a seat in the *${selectedCourse}* for the *${selectedBatch}*. Please share the registration details.`;
+    const message = `Hello MBA Academy, I would like to book a seat in the *${selectedCourse}* for the *${selectedBatch}*. Please share the registration details.`;
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/923290725117?text=${encoded}`, '_blank');
   };
@@ -812,7 +812,7 @@ export default function ComputerSection({
                 </span>
               </div>
               <div className="relative z-10">
-                <p className="text-slate-300 text-xs font-semibold">Instructor: KIPS College IT Experts</p>
+                <p className="text-slate-300 text-xs font-semibold">Instructor: MBA Academy IT Experts</p>
               </div>
             </div>
 
