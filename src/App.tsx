@@ -1389,8 +1389,33 @@ export default function App() {
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-xs font-medium mb-6">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Admissions Open 2026-27 | Limited Seats
               </div>
-              <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6">
-                Building Bright Futures<br />Class 1 to 10
+              <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6 flex flex-col gap-2">
+                <span>
+                  {"Building Bright Futures".split(" ").map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: i * 0.12 }}
+                      className="inline-block mr-3"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </span>
+                <span className="flex items-center gap-3 flex-wrap">
+                  {"Class 1 to 10".split(" ").map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 + (i * 0.12) }}
+                      className={`inline-block ${word === 'to' ? 'bg-blue-600 text-white px-3 py-0.5 rounded-xl shadow-md' : 'mr-3'}`}
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </span>
               </h1>
               <p className="text-base md:text-lg text-slate-200 mb-8 max-w-2xl leading-relaxed">
                 Premium tuition academy with expert faculty and a proven success rate. Nurturing young minds for academic excellence and absolute confidence.
