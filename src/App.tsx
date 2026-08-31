@@ -10,12 +10,52 @@ import {
   GraduationCap, BookOpen, Users, Award, Calendar, CheckCircle, 
   Phone, MapPin, Clock, MessageSquare, Menu, X, Lock, Unlock, 
   Search, Trash2, Plus, Video, Image as ImageIcon, ShieldCheck, ExternalLink, UserCheck,
-  Monitor, Terminal, Cpu, Laptop, Shield, Bell
+  Monitor, Terminal, Cpu, Laptop, Shield, Bell, Share2, Globe, Send, Edit2, Check
 } from 'lucide-react';
 import ComputerSection from './components/ComputerSection';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+export interface SocialLink {
+  id: string;
+  platform: 'whatsapp' | 'facebook' | 'youtube' | 'instagram' | 'tiktok' | 'twitter' | 'telegram' | 'linkedin' | 'website' | 'other' | string;
+  title: string;
+  url: string;
+  isActive: boolean;
+}
+
+export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
+  { id: '1', platform: 'whatsapp', title: 'Official WhatsApp Support', url: 'https://wa.me/923290725117', isActive: true },
+  { id: '2', platform: 'facebook', title: 'MBA Academy Facebook Page', url: 'https://facebook.com', isActive: true },
+  { id: '3', platform: 'youtube', title: 'YouTube Lectures & Events', url: 'https://youtube.com', isActive: true },
+  { id: '4', platform: 'instagram', title: 'Instagram Student Life', url: 'https://instagram.com', isActive: true },
+  { id: '5', platform: 'tiktok', title: 'TikTok Learning Clips', url: 'https://tiktok.com', isActive: true }
+];
+
+export const getSocialPlatformInfo = (platform: string) => {
+  switch ((platform || '').toLowerCase()) {
+    case 'whatsapp':
+      return { label: 'WhatsApp', color: 'bg-emerald-500 hover:bg-emerald-600', textColor: 'text-emerald-700', border: 'border-emerald-200', bgLight: 'bg-emerald-50', emoji: '💬', badgeBg: 'bg-emerald-500 text-white' };
+    case 'facebook':
+      return { label: 'Facebook', color: 'bg-blue-600 hover:bg-blue-700', textColor: 'text-blue-700', border: 'border-blue-200', bgLight: 'bg-blue-50', emoji: '📘', badgeBg: 'bg-blue-600 text-white' };
+    case 'youtube':
+      return { label: 'YouTube', color: 'bg-red-600 hover:bg-red-700', textColor: 'text-red-700', border: 'border-red-200', bgLight: 'bg-red-50', emoji: '▶️', badgeBg: 'bg-red-600 text-white' };
+    case 'instagram':
+      return { label: 'Instagram', color: 'bg-pink-600 hover:bg-pink-700', textColor: 'text-pink-700', border: 'border-pink-200', bgLight: 'bg-pink-50', emoji: '📸', badgeBg: 'bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white' };
+    case 'tiktok':
+      return { label: 'TikTok', color: 'bg-slate-900 hover:bg-black', textColor: 'text-slate-900', border: 'border-slate-300', bgLight: 'bg-slate-100', emoji: '🎵', badgeBg: 'bg-slate-950 text-white' };
+    case 'twitter':
+      return { label: 'Twitter / X', color: 'bg-slate-900 hover:bg-black', textColor: 'text-slate-900', border: 'border-slate-300', bgLight: 'bg-slate-100', emoji: '✖️', badgeBg: 'bg-black text-white' };
+    case 'telegram':
+      return { label: 'Telegram', color: 'bg-sky-500 hover:bg-sky-600', textColor: 'text-sky-700', border: 'border-sky-200', bgLight: 'bg-sky-50', emoji: '✈️', badgeBg: 'bg-sky-500 text-white' };
+    case 'linkedin':
+      return { label: 'LinkedIn', color: 'bg-blue-700 hover:bg-blue-800', textColor: 'text-blue-700', border: 'border-blue-200', bgLight: 'bg-blue-50', emoji: '💼', badgeBg: 'bg-blue-700 text-white' };
+    case 'website':
+    default:
+      return { label: 'Website / Portal', color: 'bg-indigo-600 hover:bg-indigo-700', textColor: 'text-indigo-700', border: 'border-indigo-200', bgLight: 'bg-indigo-50', emoji: '🌐', badgeBg: 'bg-indigo-600 text-white' };
+  }
+};
 
 const ADMIN_PASS = 'King6611';
 
@@ -222,6 +262,98 @@ export default function App() {
   const [newAdCardIcon, setNewAdCardIcon] = useState('⭐');
   const [newAdCardTitle, setNewAdCardTitle] = useState('');
   const [newAdCardDesc, setNewAdCardDesc] = useState('');
+
+  // Social Media Links (Admin Configurable + Persistent)
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(() => {
+    const saved = localStorage.getItem('tuition_social_links_v1');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return DEFAULT_SOCIAL_LINKS;
+  });
+
+  const [newSocialPlatform, setNewSocialPlatform] = useState<string>('whatsapp');
+  const [newSocialTitle, setNewSocialTitle] = useState<string>('');
+  const [newSocialUrl, setNewSocialUrl] = useState<string>('');
+  const [editingSocialId, setEditingSocialId] = useState<string | null>(null);
+
+  const saveSocialLinksToStorage = (links: SocialLink[]) => {
+    setSocialLinks(links);
+    localStorage.setItem('tuition_social_links_v1', JSON.stringify(links));
+  };
+
+  const handleAddOrUpdateSocialLink = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSocialTitle.trim() || !newSocialUrl.trim()) {
+      alert('Please provide both link title and URL!');
+      return;
+    }
+
+    let cleanUrl = newSocialUrl.trim();
+    if (!/^https?:\/\//i.test(cleanUrl) && !cleanUrl.startsWith('mailto:') && !cleanUrl.startsWith('tel:')) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    if (editingSocialId) {
+      const updated = socialLinks.map(link => 
+        link.id === editingSocialId 
+          ? { ...link, platform: newSocialPlatform, title: newSocialTitle.trim(), url: cleanUrl }
+          : link
+      );
+      saveSocialLinksToStorage(updated);
+      setEditingSocialId(null);
+      alert('Social media link updated successfully!');
+    } else {
+      const newLink: SocialLink = {
+        id: 'soc_' + Date.now(),
+        platform: newSocialPlatform,
+        title: newSocialTitle.trim(),
+        url: cleanUrl,
+        isActive: true
+      };
+      const updated = [...socialLinks, newLink];
+      saveSocialLinksToStorage(updated);
+      alert('New social media link added successfully!');
+    }
+
+    setNewSocialTitle('');
+    setNewSocialUrl('');
+    setNewSocialPlatform('whatsapp');
+  };
+
+  const handleEditSocialLink = (link: SocialLink) => {
+    setEditingSocialId(link.id);
+    setNewSocialPlatform(link.platform);
+    setNewSocialTitle(link.title);
+    setNewSocialUrl(link.url);
+    // Scroll to the social links form if in admin mode
+    const formElem = document.getElementById('admin-social-media-form');
+    if (formElem) {
+      formElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handleDeleteSocialLink = (id: string) => {
+    if (confirm('Are you sure you want to delete this social media link?')) {
+      const updated = socialLinks.filter(link => link.id !== id);
+      saveSocialLinksToStorage(updated);
+      if (editingSocialId === id) {
+        setEditingSocialId(null);
+        setNewSocialTitle('');
+        setNewSocialUrl('');
+      }
+    }
+  };
+
+  const handleToggleSocialLink = (id: string) => {
+    const updated = socialLinks.map(link => 
+      link.id === id ? { ...link, isActive: !link.isActive } : link
+    );
+    saveSocialLinksToStorage(updated);
+  };
 
   // Results state & handlers (Backend + LocalStorage)
   const [resultsList, setResultsList] = useState<any[]>([]);
@@ -1331,8 +1463,27 @@ export default function App() {
             )}
           </div>
 
-          <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition" title="WhatsApp Chat">
-            W
+          {/* Quick Active Social Media Icons in Header */}
+          <div className="hidden lg:flex items-center gap-1.5 border-l border-slate-200 pl-3">
+            {socialLinks.filter(l => l.isActive).slice(0, 4).map(link => {
+              const info = getSocialPlatformInfo(link.platform);
+              return (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-xs transition hover:scale-110 ${info.color} text-white font-bold`}
+                  title={`${link.title} (${info.label})`}
+                >
+                  <span>{info.emoji}</span>
+                </a>
+              );
+            })}
+          </div>
+
+          <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition shrink-0" title="WhatsApp Chat">
+            💬
           </a>
 
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="xl:hidden text-slate-700 p-1">
@@ -1374,8 +1525,31 @@ export default function App() {
                 {p === 'ad' ? '📢 Professional Admission Ad' : p === 'records' ? 'Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
               </button>
             ))}
-
           </div>
+
+          {/* Social Links in Mobile Drawer */}
+          {socialLinks.filter(l => l.isActive).length > 0 && (
+            <div className="border-t border-slate-100 pt-3 mt-2">
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-2">Connect with Us:</span>
+              <div className="flex flex-wrap gap-2">
+                {socialLinks.filter(l => l.isActive).map(link => {
+                  const info = getSocialPlatformInfo(link.platform);
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs px-3 py-1.5 rounded-full font-medium transition"
+                    >
+                      <span>{info.emoji}</span>
+                      <span>{link.title}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1420,7 +1594,7 @@ export default function App() {
               <p className="text-base md:text-lg text-slate-200 mb-8 max-w-2xl leading-relaxed">
                 Premium tuition academy with expert faculty and a proven success rate. Nurturing young minds for academic excellence and absolute confidence.
               </p>
-              <div className="flex flex-wrap gap-4 mb-14">
+              <div className="flex flex-wrap gap-4 mb-8">
                 <button onClick={() => setCurrentPage('teachers')} className="bg-white text-blue-900 font-semibold px-7 py-3 rounded-full shadow-lg hover:bg-blue-50 transition flex items-center gap-2 text-sm">
                   <BookOpen size={18} /> Explore Courses
                 </button>
@@ -1456,6 +1630,30 @@ export default function App() {
                   </button>
                 )}
               </div>
+
+              {/* Active Social Media Channels Row in Hero */}
+              {socialLinks.filter(l => l.isActive).length > 0 && (
+                <div className="mb-12 flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1 mr-1">
+                    <Share2 size={13} className="text-sky-400" /> Connect with Us:
+                  </span>
+                  {socialLinks.filter(l => l.isActive).map(link => {
+                    const info = getSocialPlatformInfo(link.platform);
+                    return (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full transition hover:scale-105"
+                      >
+                        <span>{info.emoji}</span>
+                        <span>{link.title}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -2762,6 +2960,58 @@ export default function App() {
               </form>
             </div>
           </div>
+
+          {/* Social Media & Community Channels Section in Contact Us Page */}
+          {socialLinks.filter(l => l.isActive).length > 0 && (
+            <div className="mt-14 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-sky-50/70 border border-blue-100 rounded-3xl p-8">
+              <div className="text-center max-w-xl mx-auto mb-8">
+                <span className="bg-blue-100 text-blue-800 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">
+                  Official Channels
+                </span>
+                <h3 className="text-2xl font-extrabold text-slate-900">Connect with Us on Social Media</h3>
+                <p className="text-xs text-slate-600 mt-1">
+                  Stay updated with our daily test results, admissions announcements, video lectures, and campus activities.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {socialLinks.filter(l => l.isActive).map(link => {
+                  const info = getSocialPlatformInfo(link.platform);
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 p-5 rounded-2xl transition duration-200 shadow-2xs hover:shadow-md flex flex-col justify-between group"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl ${info.bgLight} ${info.textColor} border ${info.border}`}>
+                            {info.emoji}
+                          </div>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${info.badgeBg}`}>
+                            {info.label}
+                          </span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-900 text-sm mb-1 group-hover:text-blue-600 transition line-clamp-1">
+                          {link.title}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 truncate mb-4">
+                          {link.url}
+                        </p>
+                      </div>
+
+                      <div className={`w-full text-center py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${info.color} text-white shadow-2xs`}>
+                        <span>Visit {info.label}</span>
+                        <ExternalLink size={12} />
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -3431,6 +3681,244 @@ export default function App() {
                 </div>
               </div>
 
+              {/* SOCIAL MEDIA & CHANNELS MANAGER (ADMIN) */}
+              <div id="admin-social-media-form" className="bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-500/20 rounded-3xl p-6 mb-8 text-left">
+                <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-blue-100 text-blue-700 rounded-2xl text-lg font-bold">
+                      🌐
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-slate-950 text-base flex items-center gap-2">
+                        Social Media & Channel Links Manager
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {socialLinks.length} Links
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Add, edit, activate, and manage your WhatsApp groups, YouTube channel, Facebook, Instagram, TikTok, and other social links.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form to Add / Edit Social Link */}
+                <form onSubmit={handleAddOrUpdateSocialLink} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs mb-6">
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                      {editingSocialId ? (
+                        <>
+                          <span className="text-amber-600">✏️ Editing Social Link</span>
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              setEditingSocialId(null);
+                              setNewSocialTitle('');
+                              setNewSocialUrl('');
+                            }}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-700 underline ml-2 cursor-pointer"
+                          >
+                            Cancel Edit
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span>➕ Add New Social Media Link</span>
+                        </>
+                      )}
+                    </h4>
+
+                    {/* Quick Preset Buttons */}
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-[10px] font-bold text-slate-400 mr-1">Quick Select:</span>
+                      {[
+                        { plat: 'whatsapp', name: 'WhatsApp', icon: '💬', title: 'Official WhatsApp Chat', defaultUrl: 'https://wa.me/923290725117' },
+                        { plat: 'facebook', name: 'Facebook', icon: '📘', title: 'MBA Academy Facebook', defaultUrl: 'https://facebook.com/' },
+                        { plat: 'youtube', name: 'YouTube', icon: '▶️', title: 'Academy YouTube Channel', defaultUrl: 'https://youtube.com/' },
+                        { plat: 'instagram', name: 'Instagram', icon: '📸', title: 'Instagram Profile', defaultUrl: 'https://instagram.com/' },
+                        { plat: 'tiktok', name: 'TikTok', icon: '🎵', title: 'TikTok Official', defaultUrl: 'https://tiktok.com/' },
+                        { plat: 'telegram', name: 'Telegram', icon: '✈️', title: 'Telegram Study Group', defaultUrl: 'https://t.me/' }
+                      ].map(p => (
+                        <button
+                          key={p.plat}
+                          type="button"
+                          onClick={() => {
+                            setNewSocialPlatform(p.plat);
+                            if (!newSocialTitle) setNewSocialTitle(p.title);
+                            if (!newSocialUrl) setNewSocialUrl(p.defaultUrl);
+                          }}
+                          className="px-2 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 text-[10px] font-bold rounded-lg transition cursor-pointer"
+                        >
+                          {p.icon} {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Select Platform <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={newSocialPlatform}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewSocialPlatform(val);
+                          if (!editingSocialId && !newSocialTitle) {
+                            const info = getSocialPlatformInfo(val);
+                            setNewSocialTitle(`MBA Academy ${info.label}`);
+                          }
+                        }}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 outline-none cursor-pointer"
+                      >
+                        <option value="whatsapp">💬 WhatsApp (Group / Chat / Channel)</option>
+                        <option value="facebook">📘 Facebook (Page / Profile / Group)</option>
+                        <option value="youtube">▶️ YouTube (Lectures & Channel)</option>
+                        <option value="instagram">📸 Instagram (Profile & Reels)</option>
+                        <option value="tiktok">🎵 TikTok (Official Account)</option>
+                        <option value="twitter">✖️ Twitter / X (Account)</option>
+                        <option value="telegram">✈️ Telegram (Channel / Group)</option>
+                        <option value="linkedin">💼 LinkedIn (Company Profile)</option>
+                        <option value="website">🌐 Website / Portal (Custom URL)</option>
+                        <option value="other">🔗 Other Social Link</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Link Title / Display Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Official WhatsApp Support, YouTube Video Lectures"
+                        value={newSocialTitle}
+                        onChange={(e) => setNewSocialTitle(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 bg-slate-50 outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Full Link / URL <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. https://wa.me/923290725117 or https://facebook.com/..."
+                        value={newSocialUrl}
+                        onChange={(e) => setNewSocialUrl(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 bg-slate-50 outline-none"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 pt-2">
+                    <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                      <span>💡</span>
+                      <span>Links are automatically formatted and will appear in Header, Home Page, Contact Page, and Footer.</span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                      {editingSocialId ? (
+                        <>
+                          <Check size={15} /> Save Changes
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={15} /> Add Social Link
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Configured Social Links List */}
+                <div>
+                  <h4 className="text-xs font-extrabold text-slate-800 mb-3 flex items-center justify-between">
+                    <span>Configured Social Media Links ({socialLinks.length})</span>
+                    <span className="text-[10px] text-slate-500 font-normal">Click toggle switch to show/hide on website</span>
+                  </h4>
+
+                  {socialLinks.length === 0 ? (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center text-slate-500 text-xs">
+                      No social media links added yet. Use the form above to add your first link!
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {socialLinks.map((link) => {
+                        const info = getSocialPlatformInfo(link.platform);
+                        return (
+                          <div 
+                            key={link.id} 
+                            className={`bg-white rounded-2xl p-4 border transition duration-200 shadow-2xs flex items-center justify-between gap-3 ${link.isActive ? 'border-slate-200' : 'border-slate-200 bg-slate-50/60 opacity-60'}`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${info.bgLight} ${info.textColor} border ${info.border}`}>
+                                {info.emoji}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <b className="text-xs text-slate-900 truncate block font-bold">{link.title}</b>
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase shrink-0 ${info.badgeBg}`}>
+                                    {info.label}
+                                  </span>
+                                </div>
+                                <a 
+                                  href={link.url} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="text-[11px] text-blue-600 hover:underline truncate block flex items-center gap-1"
+                                >
+                                  <span className="truncate">{link.url}</span>
+                                  <ExternalLink size={10} className="shrink-0" />
+                                </a>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {/* Toggle Active status */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleSocialLink(link.id)}
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-lg transition cursor-pointer ${link.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}
+                                title={link.isActive ? 'Visible to students. Click to disable' : 'Hidden. Click to enable'}
+                              >
+                                {link.isActive ? 'Active' : 'Hidden'}
+                              </button>
+
+                              {/* Edit */}
+                              <button
+                                type="button"
+                                onClick={() => handleEditSocialLink(link)}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                                title="Edit Link"
+                              >
+                                <Edit2 size={15} />
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSocialLink(link.id)}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                title="Delete Link"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
 
 
 
@@ -3514,7 +4002,7 @@ export default function App() {
 
       {/* FOOTER */}
       <footer className="bg-slate-900 text-slate-400 py-12 px-6 mt-20 border-t border-slate-800">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-1 flex items-center justify-center">
@@ -3532,7 +4020,26 @@ export default function App() {
               </div>
               <b className="text-white text-lg font-bold">MBA Academy</b>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">Class 1 to 10 - Quality Education & Professional Coaching. Admissions Open. Contact: 03290725117</p>
+            <p className="text-xs text-slate-400 leading-relaxed mb-4">
+              Class 1 to 10 - Quality Education & Professional Coaching. Admissions Open.
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {socialLinks.filter(l => l.isActive).map(link => {
+                const info = getSocialPlatformInfo(link.platform);
+                return (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-xs transition hover:scale-110 ${info.color} text-white font-bold`}
+                    title={`${link.title} (${info.label})`}
+                  >
+                    <span>{info.emoji}</span>
+                  </a>
+                );
+              })}
+            </div>
           </div>
           <div>
             <b className="text-white text-sm block mb-3">Quick Links</b>
@@ -3540,18 +4047,48 @@ export default function App() {
             <button onClick={() => setCurrentPage('about')} className="text-xs block mb-2 hover:text-white transition">About Us</button>
             <button onClick={() => setCurrentPage('teachers')} className="text-xs block mb-2 hover:text-white transition">Teachers</button>
             <button onClick={() => setCurrentPage('contact')} className="text-xs block mb-2 hover:text-white transition">Contact Us</button>
+            <button onClick={() => setCurrentPage('ad')} className="text-xs block mb-2 text-amber-400 font-semibold hover:underline">📢 Official Admission Poster</button>
           </div>
           <div>
             <b className="text-white text-sm block mb-3">Support & Tools</b>
             <button onClick={() => setCurrentPage('admission')} className="text-xs block mb-2 hover:text-white transition">Admissions</button>
             <button onClick={() => { setCurrentPage('attendance'); setSelectedClassForAttendance(null); }} className="text-xs block mb-2 hover:text-white transition">Attendance</button>
             <button onClick={() => setCurrentPage('online')} className="text-xs block mb-2 hover:text-white transition">Online Classes</button>
+            <button onClick={() => setCurrentPage('computer')} className="text-xs block mb-2 hover:text-white transition">Computer Section</button>
+            <button onClick={() => setCurrentPage('results')} className="text-xs block mb-2 hover:text-white transition">Check Results</button>
           </div>
           <div>
-            <b className="text-white text-sm block mb-3">Contact Info</b>
+            <b className="text-white text-sm block mb-3">Contact & Social Channels</b>
             <a href="tel:+923290725117" className="text-xs block mb-2 text-slate-300 hover:text-white">📞 03290725117</a>
-            <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="text-xs block mb-2 text-emerald-400 font-semibold">💬 WhatsApp Support</a>
-            <span className="text-xs block text-slate-500 mt-4">© 2026 MBA Academy. All rights reserved.</span>
+            <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="text-xs block mb-3 text-emerald-400 font-semibold">💬 WhatsApp Support</a>
+            
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-bold text-slate-400 block">Follow Us:</span>
+              {socialLinks.filter(l => l.isActive).slice(0, 3).map(link => {
+                const info = getSocialPlatformInfo(link.platform);
+                return (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs flex items-center gap-1.5 text-slate-300 hover:text-white transition"
+                  >
+                    <span>{info.emoji}</span>
+                    <span className="truncate">{link.title}</span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto border-t border-slate-800/80 pt-6 flex items-center justify-between flex-wrap gap-4 text-xs text-slate-500">
+          <span>© 2026 MBA Academy. All rights reserved.</span>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentPage('records')} className="hover:text-slate-300 transition">Admin Login</button>
+            <span>•</span>
+            <button onClick={() => setCurrentPage('contact')} className="hover:text-slate-300 transition">Help & Support</button>
           </div>
         </div>
       </footer>
