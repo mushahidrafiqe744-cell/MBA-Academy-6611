@@ -149,15 +149,7 @@ export default function App() {
     return new Date().toISOString().split('T')[0];
   });
 
-  // Class Media / Video / Audio / Image state & handlers
-  const [classMedia, setClassMedia] = useState<any[]>([]);
-  const [mediaTitle, setMediaTitle] = useState('');
-  const [mediaClass, setMediaClass] = useState('Class 1');
-  const [mediaType, setMediaType] = useState<'video' | 'audio' | 'image'>('video');
-  const [mediaFileUrl, setMediaFileUrl] = useState('');
-  const [mediaTeacher, setMediaTeacher] = useState('');
-  const [mediaClassFilter, setMediaClassFilter] = useState('all');
-  const [mediaTypeFilter, setMediaTypeFilter] = useState('all');
+
 
   // Admin add online class form
   const [onlineTitle, setOnlineTitle] = useState('');
@@ -461,7 +453,7 @@ export default function App() {
     fetchTeachers();
     fetchOnlineClasses();
     fetchUpcomingClasses();
-    fetchClassMedia();
+
     fetchResults();
     fetchAdmissions();
     loadLocalData();
@@ -634,70 +626,7 @@ export default function App() {
     }
   };
 
-  const fetchClassMedia = async () => {
-    try {
-      const { data, error } = await supabase.from('class_media').select('*');
-      if (error || !data || data.length === 0) {
-        const local = localStorage.getItem('tuition_class_media_v1');
-        if (local) setClassMedia(JSON.parse(local));
-        else setClassMedia([]);
-      } else {
-        setClassMedia(data);
-        localStorage.setItem('tuition_class_media_v1', JSON.stringify(data));
-      }
-    } catch {
-      const local = localStorage.getItem('tuition_class_media_v1');
-      if (local) setClassMedia(JSON.parse(local));
-      else setClassMedia([]);
-    }
-  };
 
-  const handleAddMedia = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mediaTitle || !mediaFileUrl) return alert('Please provide title and upload media file.');
-    const newItem = {
-      id: Date.now(),
-      title: mediaTitle,
-      className: mediaClass,
-      mediaType,
-      fileUrl: mediaFileUrl,
-      teacherName: mediaTeacher || 'Academy Faculty',
-      createdAt: new Date().toISOString()
-    };
-
-    try {
-      const { data, error } = await supabase.from('class_media').insert([newItem]).select();
-      if (error) {
-        const updated = [newItem, ...classMedia];
-        setClassMedia(updated);
-        localStorage.setItem('tuition_class_media_v1', JSON.stringify(updated));
-      } else if (data && data[0]) {
-        const updated = [data[0], ...classMedia];
-        setClassMedia(updated);
-        localStorage.setItem('tuition_class_media_v1', JSON.stringify(updated));
-      }
-    } catch {
-      const updated = [newItem, ...classMedia];
-      setClassMedia(updated);
-      localStorage.setItem('tuition_class_media_v1', JSON.stringify(updated));
-    }
-
-    setMediaTitle(''); setMediaFileUrl(''); setMediaTeacher('');
-    alert('Class media uploaded & published successfully to backend database!');
-  };
-
-  const handleDeleteMedia = async (id: number) => {
-    if (confirm('Delete this media item?')) {
-      try {
-        await supabase.from('class_media').delete().eq('id', id);
-      } catch (err) {
-        console.error(err);
-      }
-      const filtered = classMedia.filter(m => m.id !== id);
-      setClassMedia(filtered);
-      localStorage.setItem('tuition_class_media_v1', JSON.stringify(filtered));
-    }
-  };
 
   const fetchTeachers = async () => {
     try {
@@ -1272,6 +1201,7 @@ export default function App() {
           <li><button onClick={() => setCurrentPage('online')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'online' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Online Classes</button></li>
           <li><button onClick={() => setCurrentPage('computer')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'computer' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'}`}>💻 Computer</button></li>
           <li><button onClick={() => setCurrentPage('results')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'results' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Results</button></li>
+
           <li><button onClick={() => setCurrentPage('gallery')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
           <li><button onClick={() => setCurrentPage('contact')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
           <li><button onClick={() => setCurrentPage('records')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'records' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Records</button></li>
@@ -2947,6 +2877,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+
 
       {/* PAGE: COMPUTER CLASS SECTION */}
       {currentPage === 'computer' && (
