@@ -3,12 +3,330 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MBA Academy - Tuition Management & Student Portal</title>
+    <title>MBA Academy</title>
+    <meta name="description" content="All-in-One Tuition Academy Management System with Supabase backend and student portals" />
     <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <style>
+      #academy-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        background: #06152f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s ease;
+        overflow-y: auto;
+        padding: 20px 10px;
+      }
+
+      /* Campus Background Layer - pure image without color overlay */
+      .loader-bg-image {
+        position: absolute;
+        inset: 0;
+        background-image: url('/campus-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        animation: campusZoom 20s ease-in-out infinite alternate;
+        transform-origin: center center;
+      }
+
+      .loader-bg-overlay {
+        display: none;
+      }
+
+      @keyframes campusZoom {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.08); }
+      }
+
+      #academy-loader.hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .loader-content {
+        text-align: center;
+        animation: enter 1s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 24px;
+        max-width: 520px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+      }
+
+      /* Bismillah Top Section */
+      .bismillah-wrapper {
+        margin-bottom: 18px;
+        padding: 12px 24px;
+        border: 1.5px solid rgba(255, 255, 255, 0.4);
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.1);
+        position: relative;
+        width: 100%;
+        max-width: 440px;
+      }
+
+      .bismillah-corner-tl, .bismillah-corner-tr, .bismillah-corner-bl, .bismillah-corner-br {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-color: #ffffff;
+        border-style: solid;
+      }
+      .bismillah-corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; border-top-left-radius: 18px; }
+      .bismillah-corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; border-top-right-radius: 18px; }
+      .bismillah-corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; border-bottom-left-radius: 18px; }
+      .bismillah-corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; border-bottom-right-radius: 18px; }
+
+      .bismillah-arabic {
+        direction: rtl;
+        font-family: 'Amiri', 'Traditional Arabic', 'Scheherazade New', 'Noto Naskh Arabic', Georgia, serif;
+        font-size: 32px;
+        line-height: 1.4;
+        color: #ffffff;
+        text-shadow: 0 0 16px rgba(255, 255, 255, 0.9), 0 3px 10px rgba(0, 0, 0, 0.9);
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        padding: 4px 0;
+      }
+
+      .bismillah-word {
+        opacity: 0;
+        display: inline-block;
+        transform: translateY(-8px) scale(0.9);
+        animation: wordFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .bismillah-word:nth-child(1) { animation-delay: 0.2s; }
+      .bismillah-word:nth-child(2) { animation-delay: 0.7s; }
+      .bismillah-word:nth-child(3) { animation-delay: 1.2s; }
+      .bismillah-word:nth-child(4) { animation-delay: 1.7s; }
+
+      @keyframes wordFadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .academy-logo {
+        width: 155px;
+        height: 155px;
+        object-fit: contain;
+        animation: logoPulse 2.5s ease-in-out infinite;
+        filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.5)) drop-shadow(0 4px 15px rgba(0, 0, 0, 0.7));
+        margin: 0 auto 8px;
+        display: block;
+        border-radius: 50%;
+      }
+
+      .loader-content h1 {
+        margin: 8px 0 3px;
+        color: #ffffff;
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: 4px;
+        font-family: Georgia, serif;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 255, 0.4);
+      }
+
+      .loader-content p {
+        color: #ffffff;
+        font-size: 15px;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 2px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+      }
+
+      .loader-bar {
+        width: 260px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 12px;
+        margin: 16px auto 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      .loader-bar span {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #ffffff, #e2e8f0, #ffffff);
+        box-shadow: 0 0 12px #ffffff;
+        animation: progress 2.5s linear forwards;
+      }
+
+      .loading-subtext {
+        color: #ffffff;
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 18px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+      }
+
+      .enter-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #ffffff;
+        color: #06152f;
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 13px 36px;
+        border-radius: 50px;
+        border: 2px solid #ffffff;
+        cursor: pointer;
+        box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5), 0 0 25px rgba(255, 255, 255, 0.6);
+        transition: all 0.25s ease;
+        animation: btnPulse 2s infinite ease-in-out;
+      }
+
+      .enter-btn:hover {
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 35px rgba(255, 255, 255, 0.9);
+        background: #f8fafc;
+        color: #030a17;
+      }
+
+      .enter-btn:active {
+        transform: translateY(1px) scale(0.98);
+      }
+
+      @keyframes progress {
+        to { width: 100%; }
+      }
+
+      @keyframes logoPulse {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4)) drop-shadow(0 4px 15px rgba(0, 0, 0, 0.7)); }
+        50% { transform: scale(1.05); filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.7)) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.8)); }
+      }
+
+      @keyframes btnPulse {
+        0%, 100% { box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.5); }
+        50% { box-shadow: 0 8px 34px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 255, 255, 0.85); }
+      }
+
+      @keyframes enter {
+        from {
+          opacity: 0;
+          transform: scale(0.88);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @media(max-width: 600px) {
+        .bismillah-arabic {
+          font-size: 24px;
+          gap: 8px;
+        }
+
+        .academy-logo {
+          width: 125px;
+          height: 125px;
+        }
+
+        .loader-content h1 {
+          font-size: 24px;
+          letter-spacing: 3px;
+        }
+
+        .loader-content p {
+          font-size: 13px;
+        }
+
+        .loader-bar {
+          width: 200px;
+        }
+
+        .enter-btn {
+          font-size: 13px;
+          padding: 11px 26px;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="academy-loader">
+      <!-- Campus Background Image & Blur Overlay -->
+      <div class="loader-bg-image"></div>
+      <div class="loader-bg-overlay"></div>
+
+      <div class="loader-content">
+        <!-- Bismillah Header (Sab Se Top Par Word by Word Animation) -->
+        <div class="bismillah-wrapper">
+          <div class="bismillah-corner-tl"></div>
+          <div class="bismillah-corner-tr"></div>
+          <div class="bismillah-corner-bl"></div>
+          <div class="bismillah-corner-br"></div>
+          <div class="bismillah-arabic" lang="ar">
+            <span class="bismillah-word">بِسْمِ</span>
+            <span class="bismillah-word">اللهِ</span>
+            <span class="bismillah-word">الرَّحْمٰنِ</span>
+            <span class="bismillah-word">الرَّحِيْمِ</span>
+          </div>
+        </div>
+
+        <img 
+          src="/logo.png" 
+          onerror="this.onerror=null; this.src='/logo.jpg';" 
+          class="academy-logo" 
+          alt="MBA Academy Official Logo"
+        />
+
+        <h1>MBA ACADEMY</h1>
+        <p>Quality Education for Bright Future</p>
+
+        <div class="loader-bar">
+          <span></span>
+        </div>
+
+        <div class="loading-subtext">Click below to enter the academy portal</div>
+
+        <button 
+          id="enter-academy-btn" 
+          type="button" 
+          onclick="dismissAcademyLoader()" 
+          class="enter-btn"
+          title="Click to Open Website"
+        >
+          <span>Open Website</span>
+          <span style="font-size: 16px;">➔</span>
+        </button>
+      </div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      let isLoaderDismissed = false;
+      function dismissAcademyLoader() {
+        if (isLoaderDismissed) return;
+        isLoaderDismissed = true;
+        const loader = document.getElementById("academy-loader");
+        if (loader) {
+          loader.classList.add("hide");
+        }
+      }
+    </script>
   </body>
 </html>
 
