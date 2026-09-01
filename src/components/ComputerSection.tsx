@@ -246,13 +246,13 @@ export default function ComputerSection({
   const handleWhatsAppEnquiry = () => {
     const message = `Hello MBA Academy, I want to join the Computer Course!\n\n*Details:*\n👤 Name: ${studentName || 'Student'}\n📞 WhatsApp: ${studentPhone}\n👶 Age: ${studentAge || 'N/A'}\n💻 Selected Course: ${enquiryCourse}\n⏰ Preferred Batch: ${preferredBatch}\n\nPlease reserve my seat! Thanks.`;
     const encoded = encodeURIComponent(message);
-    window.open(`https://wa.me/923290725117?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/923290275117?text=${encoded}`, '_blank');
   };
 
   const handleWhatsAppDirectBooking = () => {
     const message = `Hello MBA Academy, I would like to book a seat in the *${selectedCourse}* for the *${selectedBatch}*. Please share the registration details.`;
     const encoded = encodeURIComponent(message);
-    window.open(`https://wa.me/923290725117?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/923290275117?text=${encoded}`, '_blank');
   };
 
   return (
@@ -987,7 +987,7 @@ export default function ComputerSection({
                   
                   <input 
                     type="tel" 
-                    placeholder="WhatsApp Number (e.g. 03290725117) *" 
+                    placeholder="WhatsApp Number (e.g. 03290275117) *" 
                     value={studentPhone}
                     onChange={e => setStudentPhone(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs outline-none focus:border-indigo-500 font-medium"

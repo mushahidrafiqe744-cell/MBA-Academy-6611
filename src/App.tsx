@@ -26,10 +26,10 @@ export interface SocialLink {
 }
 
 export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
-  { id: '1', platform: 'whatsapp', title: 'Official WhatsApp Support', url: 'https://wa.me/923290725117', isActive: true },
-  { id: '2', platform: 'facebook', title: 'MBA Academy Facebook Page', url: 'https://facebook.com', isActive: true },
-  { id: '3', platform: 'youtube', title: 'YouTube Lectures & Events', url: 'https://youtube.com', isActive: true },
-  { id: '4', platform: 'instagram', title: 'Instagram Student Life', url: 'https://instagram.com', isActive: true },
+  { id: '1', platform: 'whatsapp', title: 'Official WhatsApp Support', url: 'https://wa.me/923290275117', isActive: true },
+  { id: '2', platform: 'facebook', title: 'MBA Academy Facebook Page', url: 'https://www.facebook.com/profile.php?id=61592718998531', isActive: true },
+  { id: '3', platform: 'youtube', title: 'MBA Academy YouTube Channel', url: 'https://www.youtube.com/@MBAAcademy-s8z', isActive: true },
+  { id: '4', platform: 'instagram', title: 'MBA Academy Instagram', url: 'https://www.instagram.com/mbaacadmey/', isActive: true },
   { id: '5', platform: 'tiktok', title: 'TikTok Learning Clips', url: 'https://tiktok.com', isActive: true }
 ];
 
@@ -239,10 +239,10 @@ export default function App() {
     return localStorage.getItem('tuition_ad_footer_v1') || '📍 Visit Us Today for Free Demo Class & Assessment • Limited Seats Available!';
   });
   const [adPhone, setAdPhone] = useState(() => {
-    return localStorage.getItem('tuition_ad_phone_v1') || '0329-0725117 / 0341-8709574';
+    return localStorage.getItem('tuition_ad_phone_v2') || localStorage.getItem('tuition_ad_phone_v1') || '0329-0275117 / 0341-8709574';
   });
   const [adWhatsApp, setAdWhatsApp] = useState(() => {
-    return localStorage.getItem('tuition_ad_wa_v1') || '0329-0725117';
+    return localStorage.getItem('tuition_ad_wa_v2') || localStorage.getItem('tuition_ad_wa_v1') || '0329-0275117';
   });
   const [adCards, setAdCards] = useState<any[]>(() => {
     const saved = localStorage.getItem('tuition_ad_cards_v1');
@@ -265,11 +265,37 @@ export default function App() {
 
   // Social Media Links (Admin Configurable + Persistent)
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(() => {
-    const saved = localStorage.getItem('tuition_social_links_v1');
+    const saved = localStorage.getItem('tuition_social_links_v2');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    // Check v1 and migrate old placeholders to the new official URLs
+    const oldSaved = localStorage.getItem('tuition_social_links_v1');
+    if (oldSaved) {
+      try {
+        const parsed: SocialLink[] = JSON.parse(oldSaved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const migrated = parsed.map(link => {
+            if (link.platform === 'facebook' && (link.url === 'https://facebook.com' || link.url === 'https://facebook.com/' || !link.url.includes('id='))) {
+              return { ...link, url: 'https://www.facebook.com/profile.php?id=61592718998531', title: 'MBA Academy Facebook Page' };
+            }
+            if (link.platform === 'instagram' && (link.url === 'https://instagram.com' || link.url === 'https://instagram.com/' || !link.url.includes('mbaacadmey'))) {
+              return { ...link, url: 'https://www.instagram.com/mbaacadmey/', title: 'MBA Academy Instagram' };
+            }
+            if (link.platform === 'youtube' && (link.url === 'https://youtube.com' || link.url === 'https://youtube.com/' || !link.url.includes('MBAAcademy-s8z'))) {
+              return { ...link, url: 'https://www.youtube.com/@MBAAcademy-s8z', title: 'MBA Academy YouTube Channel' };
+            }
+            if (link.platform === 'whatsapp' && (link.url.includes('03290725117') || link.url === 'https://wa.me/923290725117')) {
+              return { ...link, url: 'https://wa.me/923290275117', title: 'Official WhatsApp Support' };
+            }
+            return link;
+          });
+          localStorage.setItem('tuition_social_links_v2', JSON.stringify(migrated));
+          return migrated;
+        }
       } catch (e) {}
     }
     return DEFAULT_SOCIAL_LINKS;
@@ -282,6 +308,7 @@ export default function App() {
 
   const saveSocialLinksToStorage = (links: SocialLink[]) => {
     setSocialLinks(links);
+    localStorage.setItem('tuition_social_links_v2', JSON.stringify(links));
     localStorage.setItem('tuition_social_links_v1', JSON.stringify(links));
   };
 
@@ -1226,7 +1253,7 @@ export default function App() {
     // WhatsApp notification wrapped in try/catch to avoid iframe / sandbox popup block crash
     const waText = `New Admission Request:\nStudent: ${admStudentName}\nClass: ${admClass}\nRoll No: ${admRoll}\nPhone: ${admPhone}`;
     try {
-      window.open(`https://wa.me/923290725117?text=${encodeURIComponent(waText)}`, '_blank');
+      window.open(`https://wa.me/923290275117?text=${encodeURIComponent(waText)}`, '_blank');
     } catch (e) {
       console.warn("WhatsApp popup was blocked or failed to open:", e);
     }
@@ -1482,7 +1509,7 @@ export default function App() {
             })}
           </div>
 
-          <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition shrink-0" title="WhatsApp Chat">
+          <a href="https://wa.me/923290275117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition shrink-0" title="WhatsApp Chat">
             💬
           </a>
 
@@ -2619,7 +2646,7 @@ export default function App() {
                 </div>
                 <div className="text-right bg-blue-50 border border-blue-200 px-4 py-2 rounded-xl">
                   <span className="text-[10px] font-bold text-slate-500 block uppercase">Contact Support</span>
-                  <b className="text-sm font-bold text-blue-900">0300-0000000 / 03290725117</b>
+                  <b className="text-sm font-bold text-blue-900">0300-0000000 / 03290275117</b>
                 </div>
               </div>
 
@@ -2918,14 +2945,14 @@ export default function App() {
                 <div className="bg-white p-4 rounded-2xl text-center border border-slate-200 shadow-xs">
                   <div className="text-xl mb-1">📞</div>
                   <span className="text-[10px] text-slate-400 block font-semibold uppercase">Phone</span>
-                  <b className="text-xs text-slate-900 block my-1">03290725117</b>
-                  <a href="tel:+923290725117" className="text-[11px] text-blue-600 font-bold">Call Now</a>
+                  <b className="text-xs text-slate-900 block my-1">03290275117</b>
+                  <a href="tel:+923290275117" className="text-[11px] text-blue-600 font-bold">Call Now</a>
                 </div>
                 <div className="bg-emerald-50/70 p-4 rounded-2xl text-center border border-emerald-200 shadow-xs">
                   <div className="text-xl mb-1">💬</div>
                   <span className="text-[10px] text-emerald-600 block font-semibold uppercase">WhatsApp</span>
-                  <b className="text-xs text-slate-900 block my-1">03290725117</b>
-                  <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="text-[11px] text-emerald-700 font-bold">Chat Now</a>
+                  <b className="text-xs text-slate-900 block my-1">03290275117</b>
+                  <a href="https://wa.me/923290275117" target="_blank" rel="noreferrer" className="text-[11px] text-emerald-700 font-bold">Chat Now</a>
                 </div>
                 <div className="bg-white p-4 rounded-2xl text-center border border-slate-200 shadow-xs">
                   <div className="text-xl mb-1">⏰</div>
@@ -3146,7 +3173,7 @@ export default function App() {
             }} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition cursor-pointer">
               🖨️ Print / Save Poster as PDF
             </button>
-            <a href="https://wa.me/?text=Admissions%20Open%20at%20MBA%20College%20for%20Classes%201%20to%2010!%20Call%2003290725117" target="_blank" rel="noreferrer" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition">
+            <a href="https://wa.me/?text=Admissions%20Open%20at%20MBA%20College%20for%20Classes%201%20to%2010!%20Call%2003290275117" target="_blank" rel="noreferrer" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg flex items-center gap-2 text-sm transition">
               💬 Share Ad on WhatsApp
             </a>
           </div>
@@ -3732,10 +3759,10 @@ export default function App() {
                     <div className="flex items-center gap-1 flex-wrap">
                       <span className="text-[10px] font-bold text-slate-400 mr-1">Quick Select:</span>
                       {[
-                        { plat: 'whatsapp', name: 'WhatsApp', icon: '💬', title: 'Official WhatsApp Chat', defaultUrl: 'https://wa.me/923290725117' },
-                        { plat: 'facebook', name: 'Facebook', icon: '📘', title: 'MBA Academy Facebook', defaultUrl: 'https://facebook.com/' },
-                        { plat: 'youtube', name: 'YouTube', icon: '▶️', title: 'Academy YouTube Channel', defaultUrl: 'https://youtube.com/' },
-                        { plat: 'instagram', name: 'Instagram', icon: '📸', title: 'Instagram Profile', defaultUrl: 'https://instagram.com/' },
+                        { plat: 'whatsapp', name: 'WhatsApp', icon: '💬', title: 'Official WhatsApp Support', defaultUrl: 'https://wa.me/923290275117' },
+                        { plat: 'facebook', name: 'Facebook', icon: '📘', title: 'MBA Academy Facebook Page', defaultUrl: 'https://www.facebook.com/profile.php?id=61592718998531' },
+                        { plat: 'youtube', name: 'YouTube', icon: '▶️', title: 'MBA Academy YouTube Channel', defaultUrl: 'https://www.youtube.com/@MBAAcademy-s8z' },
+                        { plat: 'instagram', name: 'Instagram', icon: '📸', title: 'MBA Academy Instagram', defaultUrl: 'https://www.instagram.com/mbaacadmey/' },
                         { plat: 'tiktok', name: 'TikTok', icon: '🎵', title: 'TikTok Official', defaultUrl: 'https://tiktok.com/' },
                         { plat: 'telegram', name: 'Telegram', icon: '✈️', title: 'Telegram Study Group', defaultUrl: 'https://t.me/' }
                       ].map(p => (
@@ -3805,7 +3832,7 @@ export default function App() {
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. https://wa.me/923290725117 or https://facebook.com/..."
+                        placeholder="e.g. https://wa.me/923290275117 or https://facebook.com/..."
                         value={newSocialUrl}
                         onChange={(e) => setNewSocialUrl(e.target.value)}
                         className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 bg-slate-50 outline-none"
@@ -4059,8 +4086,8 @@ export default function App() {
           </div>
           <div>
             <b className="text-white text-sm block mb-3">Contact & Social Channels</b>
-            <a href="tel:+923290725117" className="text-xs block mb-2 text-slate-300 hover:text-white">📞 03290725117</a>
-            <a href="https://wa.me/923290725117" target="_blank" rel="noreferrer" className="text-xs block mb-3 text-emerald-400 font-semibold">💬 WhatsApp Support</a>
+            <a href="tel:+923290275117" className="text-xs block mb-2 text-slate-300 hover:text-white">📞 03290275117</a>
+            <a href="https://wa.me/923290275117" target="_blank" rel="noreferrer" className="text-xs block mb-3 text-emerald-400 font-semibold">💬 WhatsApp Support</a>
             
             <div className="space-y-1.5 pt-1">
               <span className="text-[11px] font-bold text-slate-400 block">Follow Us:</span>
@@ -4095,14 +4122,14 @@ export default function App() {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href="https://wa.me/923290725117" 
+        href="https://wa.me/923290275117" 
         target="_blank" 
         rel="noreferrer" 
         className="fixed bottom-6 right-6 z-50 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition hover:scale-110 border-2 border-white"
-        title="Chat on WhatsApp: 03290725117"
+        title="Chat on WhatsApp: 03290275117"
       >
         <span className="text-2xl">💬</span>
-        <span className="hidden md:inline text-xs font-bold pr-1">WhatsApp 03290725117</span>
+        <span className="hidden md:inline text-xs font-bold pr-1">WhatsApp 03290275117</span>
       </a>
 
       {/* Custom Admin Login Password Modal */}
