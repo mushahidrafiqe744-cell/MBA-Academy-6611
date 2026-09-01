@@ -149,11 +149,11 @@
       }
 
       .loader-bar {
-        width: 260px;
+        width: 280px;
         height: 4px;
         background: rgba(255, 255, 255, 0.25);
         border-radius: 12px;
-        margin: 16px auto 12px;
+        margin: 18px auto 12px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 3px rgba(0, 0, 0, 0.5);
       }
@@ -164,48 +164,17 @@
         height: 100%;
         background: linear-gradient(90deg, #ffffff, #e2e8f0, #ffffff);
         box-shadow: 0 0 12px #ffffff;
-        animation: progress 2.5s linear forwards;
+        animation: progress 10s linear forwards;
       }
 
       .loading-subtext {
         color: #ffffff;
         font-size: 12px;
-        letter-spacing: 2px;
+        letter-spacing: 3px;
         text-transform: uppercase;
         font-weight: 700;
-        margin-bottom: 18px;
+        margin-top: 4px;
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
-      }
-
-      .enter-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        background: #ffffff;
-        color: #06152f;
-        font-weight: 800;
-        font-size: 15px;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        padding: 13px 36px;
-        border-radius: 50px;
-        border: 2px solid #ffffff;
-        cursor: pointer;
-        box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5), 0 0 25px rgba(255, 255, 255, 0.6);
-        transition: all 0.25s ease;
-        animation: btnPulse 2s infinite ease-in-out;
-      }
-
-      .enter-btn:hover {
-        transform: translateY(-2px) scale(1.04);
-        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 35px rgba(255, 255, 255, 0.9);
-        background: #f8fafc;
-        color: #030a17;
-      }
-
-      .enter-btn:active {
-        transform: translateY(1px) scale(0.98);
       }
 
       @keyframes progress {
@@ -215,11 +184,6 @@
       @keyframes logoPulse {
         0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4)) drop-shadow(0 4px 15px rgba(0, 0, 0, 0.7)); }
         50% { transform: scale(1.05); filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.7)) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.8)); }
-      }
-
-      @keyframes btnPulse {
-        0%, 100% { box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.5); }
-        50% { box-shadow: 0 8px 34px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 255, 255, 0.85); }
       }
 
       @keyframes enter {
@@ -254,12 +218,7 @@
         }
 
         .loader-bar {
-          width: 200px;
-        }
-
-        .enter-btn {
-          font-size: 13px;
-          padding: 11px 26px;
+          width: 220px;
         }
       }
     </style>
@@ -299,18 +258,7 @@
           <span></span>
         </div>
 
-        <div class="loading-subtext">Click below to enter the academy portal</div>
-
-        <button 
-          id="enter-academy-btn" 
-          type="button" 
-          onclick="dismissAcademyLoader()" 
-          class="enter-btn"
-          title="Click to Open Website"
-        >
-          <span>Open Website</span>
-          <span style="font-size: 16px;">➔</span>
-        </button>
+        <div class="loading-subtext">WELCOME TO MBA ACADEMY</div>
       </div>
     </div>
 
@@ -326,6 +274,9 @@
           loader.classList.add("hide");
         }
       }
+
+      // Automatically open website after exactly 10 seconds
+      setTimeout(dismissAcademyLoader, 10000);
     </script>
   </body>
 </html>
