@@ -26,25 +26,3 @@ export interface AuthModalProps {
   teachersList?: any[];
   onTeacherAdded?: (newTeacher: any) => void;
 }
-
-export interface FeeRecord {
-  id: string;
-  receiptNo: string;
-  studentName: string;
-  rollNo: string;
-  className: string;
-  section?: string;
-  parentName?: string;
-  phone?: string;
-  month: string;       // e.g. "March 2026"
-  year: number;        // e.g. 2026
-  feeAmount: number;   // e.g. 2500
-  discount: number;    // e.g. 0
-  netAmount: number;   // e.g. 2500
-  status: 'paid' | 'pending';
-  paidDate?: string;   // e.g. "2026-03-05"
-  paymentMethod?: 'Cash' | 'JazzCash' | 'EasyPaisa' | 'Bank Transfer' | 'Online';
-  collectedBy?: string;
-  notes?: string;
-  createdAt: string;
-}
