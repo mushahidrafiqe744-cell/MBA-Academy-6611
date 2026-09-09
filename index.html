@@ -21,8 +21,13 @@
       #academy-loader {
         position: fixed;
         inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
         z-index: 999999;
         background: #06152f;
         display: flex;
@@ -30,16 +35,50 @@
         justify-content: center;
         transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s ease;
         overflow: hidden !important;
-        padding: 20px 10px;
+        padding: 0;
+        margin: 0;
         box-sizing: border-box;
         touch-action: none;
         user-select: none;
       }
 
-      /* Campus Background Layer - strictly contained, no overflow or scrollbars */
+      /* Full Screen Toggle Button on Top Right */
+      .loader-fullscreen-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1000000;
+        background: rgba(0, 0, 0, 0.55);
+        color: #ffffff;
+        border: 1.5px solid rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 9999px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        transition: all 0.25s ease;
+      }
+
+      .loader-fullscreen-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #ffffff;
+        transform: scale(1.05);
+      }
+
+      /* Campus Background Layer - strictly contained, full screen cover, no overflow or scrollbars */
       .loader-bg-image {
         position: absolute;
-        inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         width: 100%;
         height: 100%;
         background-image: url('/campus-bg.jpg');
@@ -241,7 +280,24 @@
       <div class="loader-bg-image"></div>
       <div class="loader-bg-overlay"></div>
 
-      <div class="loader-content">
+      <!-- Full Screen Toggle Button -->
+      <button 
+        type="button" 
+        id="loader-fullscreen-btn" 
+        onclick="toggleAppFullscreen(event)" 
+        class="loader-fullscreen-btn"
+        title="Toggle Full Screen Mode"
+      >
+        <svg id="fs-icon-expand" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+        <svg id="fs-icon-shrink" style="display: none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+        </svg>
+        <span id="fs-label">Full Screen</span>
+      </button>
+
+      <div class="loader-content" onclick="dismissAcademyLoader()">
         <!-- Bismillah Header (Sab Se Top Par Word by Word Animation) -->
         <div class="bismillah-wrapper">
           <div class="bismillah-corner-tl"></div>
@@ -271,6 +327,24 @@
         </div>
 
         <div class="loading-subtext">WELCOME TO MBA ACADEMY</div>
+
+        <!-- Direct Login Page Button on Welcome Screen -->
+        <div style="margin-top: 18px; display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap;" onclick="event.stopPropagation()">
+          <button 
+            type="button" 
+            onclick="openAcademyLoginPage(event)" 
+            style="background: linear-gradient(135deg, #2563eb, #1e40af); color: #ffffff; border: 1.5px solid rgba(255,255,255,0.5); padding: 10px 24px; border-radius: 9999px; font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); transition: all 0.2s;"
+          >
+            🔑 Log In / Sign Up Page
+          </button>
+          <button 
+            type="button" 
+            onclick="dismissAcademyLoader(event)" 
+            style="background: rgba(0,0,0,0.5); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 9999px; font-weight: 700; font-size: 12px; cursor: pointer;"
+          >
+            🌐 Open Website
+          </button>
+        </div>
       </div>
     </div>
 
@@ -278,7 +352,15 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       let isLoaderDismissed = false;
-      function dismissAcademyLoader() {
+
+      function openAcademyLoginPage(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        window.location.hash = 'login';
+        dismissAcademyLoader();
+      }
+
+      function dismissAcademyLoader(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
         if (isLoaderDismissed) return;
         isLoaderDismissed = true;
         const loader = document.getElementById("academy-loader");
@@ -290,8 +372,52 @@
         }
       }
 
-      // Automatically open website after exactly 10 seconds
-      setTimeout(dismissAcademyLoader, 10000);
+      function toggleAppFullscreen(e) {
+        if (e && e.stopPropagation) {
+          e.stopPropagation();
+        }
+        const doc = document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (doc.requestFullscreen) {
+            doc.requestFullscreen().catch(() => {});
+          } else if (doc.webkitRequestFullscreen) {
+            doc.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      }
+
+      function updateFsBtnState() {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        const iconExpand = document.getElementById("fs-icon-expand");
+        const iconShrink = document.getElementById("fs-icon-shrink");
+        const label = document.getElementById("fs-label");
+        if (iconExpand && iconShrink && label) {
+          iconExpand.style.display = isFs ? "none" : "inline-block";
+          iconShrink.style.display = isFs ? "inline-block" : "none";
+          label.textContent = isFs ? "Exit Full Screen" : "Full Screen";
+        }
+      }
+
+      document.addEventListener("fullscreenchange", updateFsBtnState);
+      document.addEventListener("webkitfullscreenchange", updateFsBtnState);
+
+      // Automatically open website after exactly 10 seconds, directing to login if not logged in
+      setTimeout(() => {
+        if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#home') {
+          // If user didn't explicitly pick home, show login page
+          const hasUser = localStorage.getItem('ta_current_user_v1');
+          if (!hasUser) {
+            window.location.hash = 'login';
+          }
+        }
+        dismissAcademyLoader();
+      }, 10000);
     </script>
   </body>
 </html>

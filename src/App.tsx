@@ -10,9 +10,13 @@ import {
   GraduationCap, BookOpen, Users, Award, Calendar, CheckCircle, 
   Phone, MapPin, Clock, MessageSquare, Menu, X, Lock, Unlock, 
   Search, Trash2, Plus, Video, Image as ImageIcon, ShieldCheck, ExternalLink, UserCheck,
-  Monitor, Terminal, Cpu, Laptop, Shield, Bell, Share2, Globe, Send, Edit2, Check
+  Monitor, Terminal, Cpu, Laptop, Shield, Bell, Share2, Globe, Send, Edit2, Check,
+  Maximize, Minimize, LogIn, LogOut, UserCheck2, UserCircle
 } from 'lucide-react';
 import ComputerSection from './components/ComputerSection';
+import { AuthModal } from './components/AuthModal';
+import { LoginPage } from './components/LoginPage';
+import { AcademyUser } from './types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -57,7 +61,7 @@ export const getSocialPlatformInfo = (platform: string) => {
   }
 };
 
-const ADMIN_PASS = 'King6611';
+const ADMIN_PASS = 'MushahidKing';
 
 // Compress uploaded image files using canvas to avoid local storage quota limits and payload too large (404/413) server errors
 const compressImage = (file: File, maxWidth = 600, maxHeight = 600, quality = 0.7): Promise<string> => {
@@ -111,19 +115,22 @@ const compressImage = (file: File, maxWidth = 600, maxHeight = 600, quality = 0.
 export default function App() {
   const [currentPage, setCurrentPage] = useState(() => {
     const hash = window.location.hash.replace(/^#\/?/g, '');
-    const validPages = ['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
-    return (hash && validPages.includes(hash)) ? hash : 'home';
+    const validPages = ['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
+    if (hash && validPages.includes(hash)) return hash;
+    const storedUser = localStorage.getItem('ta_current_user_v1');
+    return storedUser ? 'home' : 'login';
   });
 
   // Handle browser back/forward buttons (hashchange event)
   useEffect(() => {
-    const validPages = ['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
+    const validPages = ['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
     const handleHashChange = () => {
       const hash = window.location.hash.replace(/^#\/?/g, '');
       if (hash && validPages.includes(hash)) {
         setCurrentPage(hash);
       } else if (!window.location.hash) {
-        setCurrentPage('home');
+        const storedUser = localStorage.getItem('ta_current_user_v1');
+        setCurrentPage(storedUser ? 'home' : 'login');
       }
     };
 
@@ -140,6 +147,50 @@ export default function App() {
   }, [currentPage]);
 
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('ta_admin') === '1');
+  
+  // User Authentication state (Students & Teachers with Supabase backend)
+  const [currentUser, setCurrentUser] = useState<AcademyUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('ta_current_user_v1');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalInitialMode, setAuthModalInitialMode] = useState<'login' | 'signup'>('login');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const handleUserLoginSuccess = (user: AcademyUser) => {
+    setCurrentUser(user);
+    localStorage.setItem('ta_current_user_v1', JSON.stringify(user));
+    if (user.role === 'admin') {
+      setIsAdmin(true);
+      localStorage.setItem('ta_admin', '1');
+    }
+    triggerNotification(
+      'result',
+      '👋 Logged In Successfully',
+      `Welcome, ${user.name}!`,
+      `Account: ${user.role.toUpperCase()}`
+    );
+  };
+
+  const handleUserLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('ta_current_user_v1');
+    if (isAdmin) {
+      setIsAdmin(false);
+      localStorage.removeItem('ta_admin');
+    }
+    setShowUserDropdown(false);
+    triggerNotification(
+      'result',
+      '👋 Logged Out',
+      'You have been logged out safely.',
+      'See you soon!'
+    );
+  };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('all');
 
@@ -422,6 +473,37 @@ export default function App() {
     return localStorage.getItem('tuition_notif_sound_v1') !== 'false';
   });
   const [toasts, setToasts] = useState<any[]>([]);
+
+  // Fullscreen state and handler
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!(document.fullscreenElement || (document as any).webkitFullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    const doc = document.documentElement as any;
+    if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+      if (doc.requestFullscreen) {
+        doc.requestFullscreen().catch(() => {});
+      } else if (doc.webkitRequestFullscreen) {
+        doc.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
+    }
+  };
 
   // App lock gate password state & functions (Personal Lock)
   const [appGatePassword, setAppGatePassword] = useState(() => {
@@ -1354,6 +1436,7 @@ export default function App() {
 
         {/* Desktop Menu */}
         <ul className="hidden xl:flex flex-row flex-nowrap items-center gap-1 list-none text-[13px] font-medium whitespace-nowrap">
+          <li><button onClick={() => setCurrentPage('login')} className={`px-2.5 py-1.5 rounded-lg transition whitespace-nowrap font-bold flex items-center gap-1.5 ${currentPage === 'login' ? 'bg-blue-600 text-white shadow-xs' : 'text-blue-700 bg-blue-50/80 hover:bg-blue-100'}`}><span>🔑</span> Login</button></li>
           <li><button onClick={() => setCurrentPage('home')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'home' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Home</button></li>
           <li><button onClick={() => setCurrentPage('ad')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'ad' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-amber-600 hover:bg-amber-50 font-medium'}`}>📢 Pro Ad</button></li>
           <li><button onClick={() => setCurrentPage('about')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'about' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>About Us</button></li>
@@ -1512,6 +1595,113 @@ export default function App() {
             })}
           </div>
 
+          {/* Full Screen Toggle Button */}
+          <button 
+            onClick={toggleFullscreen}
+            className="w-9 h-9 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-full flex items-center justify-center font-bold shadow-2xs transition hover:scale-105 shrink-0 cursor-pointer"
+            title={isFullscreen ? "Exit Full Screen" : "Full Screen Mode"}
+          >
+            {isFullscreen ? <Minimize size={17} /> : <Maximize size={17} />}
+          </button>
+
+          {/* User Auth Login / Sign Up or Profile Button */}
+          {currentUser ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className="flex items-center gap-2 bg-blue-50/90 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1.5 rounded-full transition cursor-pointer shadow-2xs group"
+                title="My Account"
+              >
+                <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-extrabold shadow-inner">
+                  {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
+                </div>
+                <div className="text-left hidden md:block">
+                  <div className="text-[11px] font-extrabold text-blue-950 leading-none flex items-center gap-1">
+                    <span>{currentUser.name.split(' ')[0]}</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider bg-blue-600 text-white">
+                      {currentUser.role}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-blue-600 font-medium leading-none mt-0.5">
+                    {currentUser.role === 'teacher' ? (currentUser.subject || 'Faculty') : (currentUser.studentClass || 'Student')}
+                  </div>
+                </div>
+              </button>
+
+              {showUserDropdown && (
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4 text-left animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-slate-100">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-lg">
+                      {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
+                    </div>
+                    <div className="overflow-hidden">
+                      <h4 className="font-extrabold text-slate-900 text-xs truncate">{currentUser.name}</h4>
+                      <p className="text-[10px] text-slate-500 truncate">{currentUser.email}</p>
+                      <span className="inline-block mt-0.5 text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 uppercase">
+                        {currentUser.role} {currentUser.teacherDbId ? '• DB Synced' : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 mb-3 text-xs">
+                    {currentUser.role === 'teacher' && (
+                      <button 
+                        onClick={() => { setCurrentPage('teachers'); setShowUserDropdown(false); }}
+                        className="w-full text-left p-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium flex items-center gap-2"
+                      >
+                        <span>📚</span> View Teachers Directory
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => { setCurrentPage('attendance'); setShowUserDropdown(false); }}
+                      className="w-full text-left p-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium flex items-center gap-2"
+                    >
+                      <span>📋</span> My Attendance
+                    </button>
+                    <button 
+                      onClick={() => { setCurrentPage('online'); setShowUserDropdown(false); }}
+                      className="w-full text-left p-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium flex items-center gap-2"
+                    >
+                      <span>📺</span> Online Classes
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handleUserLogout}
+                    className="w-full flex items-center justify-center gap-1.5 p-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    <LogOut size={14} />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setAuthModalInitialMode('login');
+                  setShowAuthModal(true);
+                }}
+                className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 px-3 py-1.5 rounded-full text-xs font-extrabold shadow-2xs transition hover:scale-105 cursor-pointer"
+                title="Login to Account"
+              >
+                <LogIn size={14} />
+                <span>Log In</span>
+              </button>
+              <button
+                onClick={() => {
+                  setAuthModalInitialMode('signup');
+                  setShowAuthModal(true);
+                }}
+                className="hidden sm:flex items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-3 py-1.5 rounded-full text-xs font-extrabold shadow-xs transition hover:scale-105 cursor-pointer"
+                title="Create Account"
+              >
+                <span>Sign Up</span>
+              </button>
+            </div>
+          )}
+
           <a href="https://wa.me/923290275117" target="_blank" rel="noreferrer" className="w-9 h-9 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:bg-emerald-600 transition shrink-0" title="WhatsApp Chat">
             💬
           </a>
@@ -1550,9 +1740,62 @@ export default function App() {
           </div>
 
           <div className="flex flex-col gap-2">
-            {['home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'].map(p => (
+            {/* Mobile Auth Profile / Buttons */}
+            {currentUser ? (
+              <div className="p-3 bg-blue-50/90 rounded-2xl border border-blue-200/80 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                    {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs text-blue-950">{currentUser.name}</div>
+                    <div className="text-[10px] text-blue-700 font-semibold uppercase">{currentUser.role}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleUserLogout}
+                  className="px-2.5 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    setAuthModalInitialMode('login');
+                    setShowAuthModal(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 font-bold px-3 py-2.5 rounded-xl text-xs hover:bg-blue-100 transition"
+                >
+                  <LogIn size={15} />
+                  <span>Log In</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setAuthModalInitialMode('signup');
+                    setShowAuthModal(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 bg-blue-600 text-white font-bold px-3 py-2.5 rounded-xl text-xs hover:bg-blue-700 transition shadow-xs"
+                >
+                  <span>Sign Up</span>
+                </button>
+              </div>
+            )}
+
+            <button 
+              onClick={() => { toggleFullscreen(); setMobileMenuOpen(false); }}
+              className="w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-bold px-4 py-2.5 rounded-xl text-xs hover:bg-blue-100 transition"
+            >
+              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+              <span>{isFullscreen ? 'Exit Full Screen' : 'Open Full Screen Mode'}</span>
+            </button>
+
+            {['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'].map(p => (
               <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-                {p === 'ad' ? '📢 Professional Admission Ad' : p === 'records' ? 'Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
+                {p === 'login' ? '🔑 Log In / Sign Up Portal' : p === 'ad' ? '📢 Professional Admission Ad' : p === 'records' ? 'Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
               </button>
             ))}
           </div>
@@ -1581,6 +1824,29 @@ export default function App() {
             </div>
           )}
         </div>
+      )}
+
+      {/* PAGE: LOGIN & SIGN UP */}
+      {currentPage === 'login' && (
+        <LoginPage
+          onSuccess={(user) => {
+            handleUserLoginSuccess(user);
+            setCurrentPage('home');
+          }}
+          onNavigateHome={() => setCurrentPage('home')}
+          adminPassword={adminPassword}
+          teachersList={teachers}
+          onTeacherAdded={(newT) => {
+            setTeachers(prev => {
+              const exists = prev.some(t => t.id === newT.id);
+              if (exists) return prev;
+              const updated = [...prev, newT];
+              localStorage.setItem('ta_teachers', JSON.stringify(updated));
+              return updated;
+            });
+          }}
+          initialMode={authModalInitialMode}
+        />
       )}
 
       {/* PAGE: HOME */}
@@ -1625,6 +1891,9 @@ export default function App() {
                 Premium tuition academy with expert faculty and a proven success rate. Nurturing young minds for academic excellence and absolute confidence.
               </p>
               <div className="flex flex-wrap gap-4 mb-8">
+                <button onClick={() => setCurrentPage('login')} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm border border-white/20">
+                  <Lock size={18} /> Student & Teacher Login
+                </button>
                 <button onClick={() => setCurrentPage('teachers')} className="bg-white text-blue-900 font-semibold px-7 py-3 rounded-full shadow-lg hover:bg-blue-50 transition flex items-center gap-2 text-sm">
                   <BookOpen size={18} /> Explore Courses
                 </button>
@@ -3258,79 +3527,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* ADMIN SECURITY & PASSWORD SETTINGS */}
-              <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border border-amber-200 rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs text-left">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-amber-200 p-2 flex items-center justify-center shrink-0 text-2xl">
-                    🔐
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                      Admin Security & Password
-                      <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Active</span>
-                    </h3>
-                    <p className="text-xs text-slate-600 mt-1">
-                      Current Password: <span className="font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-amber-300 text-slate-900 tracking-wider">
-                        {showAdminPasswordInSettings ? adminPassword : '••••••••••••'}
-                      </span>
-                      <button 
-                        type="button"
-                        onClick={() => setShowAdminPasswordInSettings(!showAdminPasswordInSettings)}
-                        className="ml-2 text-blue-600 hover:text-blue-800 font-bold underline text-[11px] cursor-pointer"
-                      >
-                        {showAdminPasswordInSettings ? 'Hide' : 'Show'}
-                      </button>
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto flex-wrap">
-                  <input 
-                    type="text" 
-                    placeholder="New Password..." 
-                    value={newPasswordInput} 
-                    onChange={(e) => setNewPasswordInput(e.target.value)}
-                    className="bg-white px-3 py-2 border border-amber-200 rounded-xl text-xs outline-none w-full sm:w-44 font-mono"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      if (!newPasswordInput.trim()) {
-                        alert('Please enter a new password!');
-                        return;
-                      }
-                      const updated = newPasswordInput.trim();
-                      setAdminPassword(updated);
-                      setAppGatePassword(updated);
-                      localStorage.setItem('ta_admin_password_v1', updated);
-                      localStorage.setItem('app_gate_password_v1', updated);
-                      setNewPasswordInput('');
-                      alert(`Admin password updated successfully to: ${updated}`);
-                    }}
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition cursor-pointer"
-                  >
-                    Update
-                  </button>
-                  {adminPassword !== 'MushahidKing' && (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        if (confirm('Reset admin password to default "MushahidKing"?')) {
-                          setAdminPassword('MushahidKing');
-                          setAppGatePassword('MushahidKing');
-                          localStorage.setItem('ta_admin_password_v1', 'MushahidKing');
-                          localStorage.setItem('app_gate_password_v1', 'MushahidKing');
-                          alert('Admin password reset to default: MushahidKing');
-                        }
-                      }}
-                      className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-3 py-2 rounded-xl text-xs transition cursor-pointer"
-                    >
-                      Reset Default
-                    </button>
-                  )}
-                </div>
-              </div>
-              
               {/* ACADEMY BRANDING & LOGO SETTINGS */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs text-left">
                 <div className="flex items-center gap-4">
@@ -4191,6 +4387,8 @@ export default function App() {
           <div className="flex items-center gap-4">
             <button onClick={() => setCurrentPage('records')} className="hover:text-slate-300 transition">Admin Login</button>
             <span>•</span>
+            <button onClick={() => { setAuthModalInitialMode('login'); setShowAuthModal(true); }} className="hover:text-slate-300 transition">Portal Login / Sign Up</button>
+            <span>•</span>
             <button onClick={() => setCurrentPage('contact')} className="hover:text-slate-300 transition">Help & Support</button>
           </div>
         </div>
@@ -4207,6 +4405,25 @@ export default function App() {
         <span className="text-2xl">💬</span>
         <span className="hidden md:inline text-xs font-bold pr-1">WhatsApp 03290275117</span>
       </a>
+
+      {/* User Login & Sign Up Modal with Supabase Teachers Database Integration */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleUserLoginSuccess}
+        initialMode={authModalInitialMode}
+        adminPassword={adminPassword}
+        teachersList={teachers}
+        onTeacherAdded={(newT) => {
+          setTeachers(prev => {
+            const exists = prev.some(t => t.id === newT.id);
+            if (exists) return prev;
+            const updated = [...prev, newT];
+            localStorage.setItem('ta_teachers', JSON.stringify(updated));
+            return updated;
+          });
+        }}
+      />
 
       {/* Custom Admin Login Password Modal */}
       {showAdminLoginModal && (
