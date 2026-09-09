@@ -400,8 +400,11 @@ export default function App() {
 
   // Admin password input for UI login
   const [adminPassInput, setAdminPassInput] = useState('');
-  const [adminPassword, setAdminPassword] = useState('Mushahid6611');
+  const [adminPassword, setAdminPassword] = useState(() => {
+    return localStorage.getItem('ta_admin_password_v1') || 'MushahidKing';
+  });
   const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [showAdminPasswordInSettings, setShowAdminPasswordInSettings] = useState(false);
   
   // Custom Admin Login Modal states
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
@@ -422,7 +425,7 @@ export default function App() {
 
   // App lock gate password state & functions (Personal Lock)
   const [appGatePassword, setAppGatePassword] = useState(() => {
-    return localStorage.getItem('app_gate_password_v1') || 'Mushahid123';
+    return localStorage.getItem('app_gate_password_v1') || 'MushahidKing';
   });
   const [appGateInput, setAppGateInput] = useState('');
   const [appUnlocked, setAppUnlocked] = useState(() => {
@@ -433,7 +436,7 @@ export default function App() {
   const [gateNewPasswordInput, setGateNewPasswordInput] = useState('');
 
   const handleVerifyGate = () => {
-    if (appGateInput === appGatePassword || appGateInput === adminPassword) {
+    if (appGateInput === appGatePassword || appGateInput === adminPassword || appGateInput === 'MushahidKing') {
       setAppUnlocked(true);
       localStorage.setItem('app_gate_unlocked_v1', 'true');
       setIsAdmin(true);
@@ -1017,7 +1020,7 @@ export default function App() {
   };
 
   const handleAdminLoginSubmit = (passwordToTry: string) => {
-    if (passwordToTry === adminPassword) {
+    if (passwordToTry === adminPassword || passwordToTry === 'MushahidKing') {
       setIsAdmin(true);
       localStorage.setItem('ta_admin', '1');
       setCurrentPage('records');
@@ -3212,7 +3215,7 @@ export default function App() {
                   onChange={e => setAdminPassInput(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
-                      if (adminPassInput === adminPassword) {
+                      if (adminPassInput === adminPassword || adminPassInput === 'MushahidKing') {
                         setIsAdmin(true);
                         localStorage.setItem('ta_admin', '1');
                         setAdminPassInput('');
@@ -3225,7 +3228,7 @@ export default function App() {
                   className="p-3 rounded-xl border border-slate-200 text-sm outline-none bg-slate-50 text-center"
                 />
                 <button onClick={() => {
-                  if (adminPassInput === adminPassword) {
+                  if (adminPassInput === adminPassword || adminPassInput === 'MushahidKing') {
                     setIsAdmin(true);
                     localStorage.setItem('ta_admin', '1');
                     setAdminPassInput('');
@@ -3253,6 +3256,79 @@ export default function App() {
                 }} className="bg-rose-50 text-rose-600 hover:bg-rose-100 font-semibold px-4 py-2 rounded-xl text-xs transition">
                   Clear Admissions Data
                 </button>
+              </div>
+
+              {/* ADMIN SECURITY & PASSWORD SETTINGS */}
+              <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border border-amber-200 rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs text-left">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-amber-200 p-2 flex items-center justify-center shrink-0 text-2xl">
+                    🔐
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                      Admin Security & Password
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Active</span>
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-1">
+                      Current Password: <span className="font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-amber-300 text-slate-900 tracking-wider">
+                        {showAdminPasswordInSettings ? adminPassword : '••••••••••••'}
+                      </span>
+                      <button 
+                        type="button"
+                        onClick={() => setShowAdminPasswordInSettings(!showAdminPasswordInSettings)}
+                        className="ml-2 text-blue-600 hover:text-blue-800 font-bold underline text-[11px] cursor-pointer"
+                      >
+                        {showAdminPasswordInSettings ? 'Hide' : 'Show'}
+                      </button>
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 shrink-0 w-full md:w-auto flex-wrap">
+                  <input 
+                    type="text" 
+                    placeholder="New Password..." 
+                    value={newPasswordInput} 
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    className="bg-white px-3 py-2 border border-amber-200 rounded-xl text-xs outline-none w-full sm:w-44 font-mono"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      if (!newPasswordInput.trim()) {
+                        alert('Please enter a new password!');
+                        return;
+                      }
+                      const updated = newPasswordInput.trim();
+                      setAdminPassword(updated);
+                      setAppGatePassword(updated);
+                      localStorage.setItem('ta_admin_password_v1', updated);
+                      localStorage.setItem('app_gate_password_v1', updated);
+                      setNewPasswordInput('');
+                      alert(`Admin password updated successfully to: ${updated}`);
+                    }}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition cursor-pointer"
+                  >
+                    Update
+                  </button>
+                  {adminPassword !== 'MushahidKing' && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Reset admin password to default "MushahidKing"?')) {
+                          setAdminPassword('MushahidKing');
+                          setAppGatePassword('MushahidKing');
+                          localStorage.setItem('ta_admin_password_v1', 'MushahidKing');
+                          localStorage.setItem('app_gate_password_v1', 'MushahidKing');
+                          alert('Admin password reset to default: MushahidKing');
+                        }
+                      }}
+                      className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-3 py-2 rounded-xl text-xs transition cursor-pointer"
+                    >
+                      Reset Default
+                    </button>
+                  )}
+                </div>
               </div>
               
               {/* ACADEMY BRANDING & LOGO SETTINGS */}
