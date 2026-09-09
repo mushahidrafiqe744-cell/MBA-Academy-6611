@@ -11,11 +11,14 @@ import {
   Phone, MapPin, Clock, MessageSquare, Menu, X, Lock, Unlock, 
   Search, Trash2, Plus, Video, Image as ImageIcon, ShieldCheck, ExternalLink, UserCheck,
   Monitor, Terminal, Cpu, Laptop, Shield, Bell, Share2, Globe, Send, Edit2, Check,
-  Maximize, Minimize, LogIn, LogOut, UserCheck2, UserCircle
+  Maximize, Minimize, LogIn, LogOut, UserCheck2, UserCircle,
+  CreditCard, DollarSign
 } from 'lucide-react';
 import ComputerSection from './components/ComputerSection';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
+import { LoginRewardCelebration } from './components/LoginRewardCelebration';
+import { FeesManagement } from './components/FeesManagement';
 import { AcademyUser } from './types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -115,7 +118,7 @@ const compressImage = (file: File, maxWidth = 600, maxHeight = 600, quality = 0.
 export default function App() {
   const [currentPage, setCurrentPage] = useState(() => {
     const hash = window.location.hash.replace(/^#\/?/g, '');
-    const validPages = ['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
+    const validPages = ['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'fees', 'gallery', 'contact', 'records'];
     if (hash && validPages.includes(hash)) return hash;
     const storedUser = localStorage.getItem('ta_current_user_v1');
     return storedUser ? 'home' : 'login';
@@ -123,7 +126,7 @@ export default function App() {
 
   // Handle browser back/forward buttons (hashchange event)
   useEffect(() => {
-    const validPages = ['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
+    const validPages = ['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'fees', 'gallery', 'contact', 'records'];
     const handleHashChange = () => {
       const hash = window.location.hash.replace(/^#\/?/g, '');
       if (hash && validPages.includes(hash)) {
@@ -152,7 +155,11 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<AcademyUser | null>(() => {
     try {
       const saved = localStorage.getItem('ta_current_user_v1');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      const coinKey = `ta_user_coins_${parsed.id || parsed.email || 'guest'}`;
+      const savedCoins = parseInt(localStorage.getItem(coinKey) || '10', 10);
+      return { ...parsed, coins: parsed.coins ?? savedCoins };
     } catch {
       return null;
     }
@@ -161,18 +168,55 @@ export default function App() {
   const [authModalInitialMode, setAuthModalInitialMode] = useState<'login' | 'signup'>('login');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
+  // Flower Shower & 10 Coins Reward Celebration state
+  const [celebrationState, setCelebrationState] = useState<{
+    isOpen: boolean;
+    userName: string;
+    userRole: 'student' | 'teacher' | 'admin';
+    coinsAwarded: number;
+    totalCoins: number;
+  }>({
+    isOpen: false,
+    userName: '',
+    userRole: 'student',
+    coinsAwarded: 10,
+    totalCoins: 10,
+  });
+
   const handleUserLoginSuccess = (user: AcademyUser) => {
-    setCurrentUser(user);
-    localStorage.setItem('ta_current_user_v1', JSON.stringify(user));
+    // Award 10 coins to the student or teacher
+    const coinKey = `ta_user_coins_${user.id || user.email || 'guest'}`;
+    const previousCoins = parseInt(localStorage.getItem(coinKey) || '0', 10);
+    const coinsAwarded = 10;
+    const newTotalCoins = previousCoins + coinsAwarded;
+    localStorage.setItem(coinKey, newTotalCoins.toString());
+
+    const updatedUser: AcademyUser = {
+      ...user,
+      coins: newTotalCoins,
+    };
+
+    setCurrentUser(updatedUser);
+    localStorage.setItem('ta_current_user_v1', JSON.stringify(updatedUser));
     if (user.role === 'admin') {
       setIsAdmin(true);
       localStorage.setItem('ta_admin', '1');
     }
+
+    // Trigger flower shower & 10 coins celebration
+    setCelebrationState({
+      isOpen: true,
+      userName: user.name,
+      userRole: user.role,
+      coinsAwarded: coinsAwarded,
+      totalCoins: newTotalCoins,
+    });
+
     triggerNotification(
       'result',
-      '👋 Logged In Successfully',
-      `Welcome, ${user.name}!`,
-      `Account: ${user.role.toUpperCase()}`
+      '🌸 Welcome Flower Shower & +10 Coins! 🪙',
+      `Welcome, ${user.name}! You earned 10 MBA Coins.`,
+      `Total Wallet Balance: ${newTotalCoins} Coins`
     );
   };
 
@@ -216,6 +260,9 @@ export default function App() {
     const saved = localStorage.getItem('tuition_ramadan_rozay_v1');
     return saved ? JSON.parse(saved) : {};
   });
+
+  // Admin Dashboard Active Section Tab
+  const [adminActiveTab, setAdminActiveTab] = useState<'fees' | 'admissions' | 'students' | 'settings' | 'all'>('fees');
 
   // Attendance view state
   const [selectedClassForAttendance, setSelectedClassForAttendance] = useState<string | null>(null);
@@ -1449,7 +1496,8 @@ export default function App() {
 
           <li><button onClick={() => setCurrentPage('gallery')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'gallery' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Gallery</button></li>
           <li><button onClick={() => setCurrentPage('contact')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Contact</button></li>
-          <li><button onClick={() => setCurrentPage('records')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'records' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Records</button></li>
+          <li><button onClick={() => setCurrentPage('fees')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap font-bold flex items-center gap-1 ${currentPage === 'fees' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-700 bg-emerald-50/90 hover:bg-emerald-100'}`}><span>💳</span> Fees</button></li>
+          <li><button onClick={() => setCurrentPage('records')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'records' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Records</button></li>
         </ul>
 
         <div className="flex items-center gap-3">
@@ -1606,44 +1654,93 @@ export default function App() {
 
           {/* User Auth Login / Sign Up or Profile Button */}
           {currentUser ? (
-            <div className="relative">
+            <div className="flex items-center gap-2">
+              {/* User Golden Coins Badge */}
               <button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2 bg-blue-50/90 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1.5 rounded-full transition cursor-pointer shadow-2xs group"
-                title="My Account"
+                onClick={() => {
+                  setCelebrationState({
+                    isOpen: true,
+                    userName: currentUser.name,
+                    userRole: currentUser.role,
+                    coinsAwarded: 10,
+                    totalCoins: currentUser.coins ?? 10,
+                  });
+                }}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400/20 via-yellow-400/30 to-amber-500/20 hover:from-amber-400/30 hover:to-yellow-400/40 border border-amber-300/80 px-2.5 py-1.5 rounded-full text-xs font-black text-amber-950 shadow-2xs hover:scale-105 transition cursor-pointer"
+                title="Your MBA Coins Reward (Click for Flower Shower!)"
               >
-                <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-extrabold shadow-inner">
-                  {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
-                </div>
-                <div className="text-left hidden md:block">
-                  <div className="text-[11px] font-extrabold text-blue-950 leading-none flex items-center gap-1">
-                    <span>{currentUser.name.split(' ')[0]}</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider bg-blue-600 text-white">
-                      {currentUser.role}
-                    </span>
-                  </div>
-                  <div className="text-[9px] text-blue-600 font-medium leading-none mt-0.5">
-                    {currentUser.role === 'teacher' ? (currentUser.subject || 'Faculty') : (currentUser.studentClass || 'Student')}
-                  </div>
-                </div>
+                <span className="text-sm">🪙</span>
+                <span className="font-mono font-black">{currentUser.coins ?? 10}</span>
+                <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-amber-800 font-extrabold">Coins</span>
+                <span className="text-xs">🌸</span>
               </button>
 
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4 text-left animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-slate-100">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-lg">
-                      {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
-                    </div>
-                    <div className="overflow-hidden">
-                      <h4 className="font-extrabold text-slate-900 text-xs truncate">{currentUser.name}</h4>
-                      <p className="text-[10px] text-slate-500 truncate">{currentUser.email}</p>
-                      <span className="inline-block mt-0.5 text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 uppercase">
-                        {currentUser.role} {currentUser.teacherDbId ? '• DB Synced' : ''}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserDropdown(!showUserDropdown)}
+                  className="flex items-center gap-2 bg-blue-50/90 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1.5 rounded-full transition cursor-pointer shadow-2xs group"
+                  title="My Account"
+                >
+                  <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-extrabold shadow-inner">
+                    {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
+                  </div>
+                  <div className="text-left hidden md:block">
+                    <div className="text-[11px] font-extrabold text-blue-950 leading-none flex items-center gap-1">
+                      <span>{currentUser.name.split(' ')[0]}</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider bg-blue-600 text-white">
+                        {currentUser.role}
                       </span>
                     </div>
+                    <div className="text-[9px] text-blue-600 font-medium leading-none mt-0.5">
+                      {currentUser.role === 'teacher' ? (currentUser.subject || 'Faculty') : (currentUser.studentClass || 'Student')}
+                    </div>
                   </div>
+                </button>
 
-                  <div className="space-y-1 mb-3 text-xs">
+                {showUserDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4 text-left animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-slate-100">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-lg">
+                        {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
+                      </div>
+                      <div className="overflow-hidden">
+                        <h4 className="font-extrabold text-slate-900 text-xs truncate">{currentUser.name}</h4>
+                        <p className="text-[10px] text-slate-500 truncate">{currentUser.email}</p>
+                        <span className="inline-block mt-0.5 text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 uppercase">
+                          {currentUser.role} {currentUser.teacherDbId ? '• DB Synced' : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Coins Wallet Box in Dropdown */}
+                    <div className="p-2.5 mb-3 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-xl border border-amber-200/80 flex items-center justify-between shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🪙</span>
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-wider text-amber-900">MBA Reward Wallet</div>
+                          <div className="text-xs font-black text-amber-950 font-mono">
+                            {currentUser.coins ?? 10} Coins
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          setCelebrationState({
+                            isOpen: true,
+                            userName: currentUser.name,
+                            userRole: currentUser.role,
+                            coinsAwarded: 10,
+                            totalCoins: currentUser.coins ?? 10,
+                          });
+                        }}
+                        className="px-2 py-1 bg-amber-200 hover:bg-amber-300 text-amber-950 text-[10px] font-bold rounded-lg transition flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>🌸</span> Shower
+                      </button>
+                    </div>
+
+                    <div className="space-y-1 mb-3 text-xs">
                     {currentUser.role === 'teacher' && (
                       <button 
                         onClick={() => { setCurrentPage('teachers'); setShowUserDropdown(false); }}
@@ -1676,6 +1773,7 @@ export default function App() {
                 </div>
               )}
             </div>
+          </div>
           ) : (
             <div className="flex items-center gap-1.5">
               <button
@@ -1742,21 +1840,47 @@ export default function App() {
           <div className="flex flex-col gap-2">
             {/* Mobile Auth Profile / Buttons */}
             {currentUser ? (
-              <div className="p-3 bg-blue-50/90 rounded-2xl border border-blue-200/80 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
-                    {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
+              <div className="space-y-2">
+                <div className="p-3 bg-blue-50/90 rounded-2xl border border-blue-200/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                      {currentUser.role === 'teacher' ? '🏫' : currentUser.role === 'admin' ? '🛡️' : '🎓'}
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-xs text-blue-950">{currentUser.name}</div>
+                      <div className="text-[10px] text-blue-700 font-semibold uppercase">{currentUser.role}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-extrabold text-xs text-blue-950">{currentUser.name}</div>
-                    <div className="text-[10px] text-blue-700 font-semibold uppercase">{currentUser.role}</div>
-                  </div>
+                  <button
+                    onClick={handleUserLogout}
+                    className="px-2.5 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                  >
+                    Log Out
+                  </button>
                 </div>
+
+                {/* Mobile Coins Reward Pill */}
                 <button
-                  onClick={handleUserLogout}
-                  className="px-2.5 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setCelebrationState({
+                      isOpen: true,
+                      userName: currentUser.name,
+                      userRole: currentUser.role,
+                      coinsAwarded: 10,
+                      totalCoins: currentUser.coins ?? 10,
+                    });
+                  }}
+                  className="w-full p-2.5 bg-gradient-to-r from-amber-100/90 via-yellow-100 to-amber-100 border border-amber-300 rounded-xl flex items-center justify-between text-xs font-black text-amber-950"
                 >
-                  Log Out
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🪙</span>
+                    <span>Your Reward Balance:</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono">
+                    <span className="text-sm bg-amber-400/60 px-2 py-0.5 rounded-full">{currentUser.coins ?? 10} Coins</span>
+                    <span>🌸</span>
+                  </div>
                 </button>
               </div>
             ) : (
@@ -1793,9 +1917,9 @@ export default function App() {
               <span>{isFullscreen ? 'Exit Full Screen' : 'Open Full Screen Mode'}</span>
             </button>
 
-            {['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'].map(p => (
+            {['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'fees', 'gallery', 'contact', 'records'].map(p => (
               <button key={p} onClick={() => { setCurrentPage(p); setMobileMenuOpen(false); if(p==='attendance') setSelectedClassForAttendance(null); }} className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium capitalize ${currentPage === p ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}>
-                {p === 'login' ? '🔑 Log In / Sign Up Portal' : p === 'ad' ? '📢 Professional Admission Ad' : p === 'records' ? 'Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
+                {p === 'login' ? '🔑 Log In / Sign Up Portal' : p === 'ad' ? '📢 Professional Admission Ad' : p === 'fees' ? '💳 Student Tuition Fees' : p === 'records' ? 'Records Dashboard' : p === 'computer' ? '💻 Computer Class' : p}
               </button>
             ))}
           </div>
@@ -3527,8 +3651,79 @@ export default function App() {
                 </button>
               </div>
 
+              {/* ADMIN DASHBOARD SECTION TABS */}
+              <div className="flex items-center gap-2 p-1.5 bg-slate-100/90 border border-slate-200/80 rounded-2xl mb-8 overflow-x-auto text-xs font-bold shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('fees')}
+                  className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${adminActiveTab === 'fees' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-700 hover:bg-white/70'}`}
+                >
+                  <CreditCard size={15} />
+                  <span>Monthly Tuition Fees</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${adminActiveTab === 'fees' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'}`}>
+                    Revenue & Tracker
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('admissions')}
+                  className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${adminActiveTab === 'admissions' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 hover:bg-white/70'}`}
+                >
+                  <span>📝</span>
+                  <span>Admission Forms</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${adminActiveTab === 'admissions' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
+                    {admissions.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('students')}
+                  className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${adminActiveTab === 'students' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-700 hover:bg-white/70'}`}
+                >
+                  <span>🎓</span>
+                  <span>Enrolled Students</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${adminActiveTab === 'students' ? 'bg-indigo-800 text-indigo-100' : 'bg-indigo-100 text-indigo-800'}`}>
+                    {attendanceStudents.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('settings')}
+                  className={`px-4 py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${adminActiveTab === 'settings' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-700 hover:bg-white/70'}`}
+                >
+                  <span>⚙️</span>
+                  <span>Branding & Settings</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdminActiveTab('all')}
+                  className={`px-3 py-2 rounded-xl transition whitespace-nowrap cursor-pointer text-slate-500 hover:text-slate-800 ${adminActiveTab === 'all' ? 'font-black underline text-blue-600' : ''}`}
+                >
+                  View All Sections
+                </button>
+              </div>
+
+              {/* 1. FEES MANAGEMENT SECTION */}
+              {(adminActiveTab === 'fees' || adminActiveTab === 'all') && (
+                <div className="mb-12">
+                  <FeesManagement
+                    isAdmin={true}
+                    enrolledStudents={attendanceStudents}
+                    admissionsList={admissions}
+                    academyLogo={academyLogo}
+                  />
+                </div>
+              )}
+
+              {/* 2. ACADEMY BRANDING & SETTINGS SECTION */}
+              {(adminActiveTab === 'settings' || adminActiveTab === 'all') && (
+                <div className="space-y-8 mb-12">
               {/* ACADEMY BRANDING & LOGO SETTINGS */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs text-left">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs text-left">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-blue-200 p-2 flex items-center justify-center shrink-0">
                     {!logoError && academyLogo ? (
@@ -4423,6 +4618,16 @@ export default function App() {
             return updated;
           });
         }}
+      />
+
+      {/* Flower Shower & 10 Coins Reward Celebration */}
+      <LoginRewardCelebration
+        isOpen={celebrationState.isOpen}
+        userName={celebrationState.userName}
+        userRole={celebrationState.userRole}
+        coinsAwarded={celebrationState.coinsAwarded}
+        totalCoins={celebrationState.totalCoins}
+        onClose={() => setCelebrationState(prev => ({ ...prev, isOpen: false }))}
       />
 
       {/* Custom Admin Login Password Modal */}

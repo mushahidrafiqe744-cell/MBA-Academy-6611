@@ -500,6 +500,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Role Selection */}
             <div className="mb-5">
+              {/* Welcome 10 Coins & Flower Shower Banner */}
+              <div className="mb-3.5 p-3 bg-gradient-to-r from-pink-50 via-rose-50 to-amber-50 border border-pink-200/80 rounded-2xl flex items-center gap-3 text-xs text-slate-800 shadow-2xs">
+                <span className="text-2xl animate-bounce select-none">🌸</span>
+                <div className="flex-1 text-left">
+                  <div className="font-extrabold text-pink-950 flex items-center gap-1.5">
+                    <span>Welcome Gift Waiting!</span>
+                    <span className="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                      +10 🪙 Coins
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 font-medium leading-tight mt-0.5">
+                    لاگ ان ہونے پر خوبصورت پھول اور 10 کوائنز انعام ملیں گے!
+                  </div>
+                </div>
+                <span className="text-xl select-none">🪙</span>
+              </div>
+
               <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block mb-2">
                 Select Your Role:
               </label>

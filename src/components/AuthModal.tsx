@@ -482,6 +482,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* Role Selection */}
           <div className="mb-5">
+            {/* Welcome 10 Coins & Flower Shower Banner */}
+            <div className="mb-3.5 p-2.5 bg-gradient-to-r from-pink-50 via-rose-50 to-amber-50 border border-pink-200/80 rounded-2xl flex items-center gap-2.5 text-xs text-slate-800 shadow-2xs">
+              <span className="text-xl animate-bounce select-none">🌸</span>
+              <div className="flex-1 text-left">
+                <div className="font-extrabold text-pink-950 flex items-center gap-1.5">
+                  <span>Welcome Gift!</span>
+                  <span className="bg-amber-400 text-amber-950 text-[10px] font-black px-1.5 py-0.2 rounded-full shadow-xs">
+                    +10 🪙 Coins
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-600 font-medium leading-tight mt-0.5">
+                  لاگ ان پر پھولوں کا استقبال اور 10 کوائنز انعام!
+                </div>
+              </div>
+              <span className="text-lg select-none">🪙</span>
+            </div>
+
             <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block mb-2">
               Select Your Role:
             </label>
