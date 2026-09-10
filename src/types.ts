@@ -22,6 +22,7 @@ export interface AuthModalProps {
   onClose: () => void;
   onSuccess: (user: AcademyUser) => void;
   initialMode?: 'login' | 'signup';
+  initialRole?: UserRole;
   adminPassword?: string;
   teachersList?: any[];
   onTeacherAdded?: (newTeacher: any) => void;

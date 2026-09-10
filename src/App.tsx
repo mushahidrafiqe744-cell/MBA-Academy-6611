@@ -11,13 +11,13 @@ import {
   Phone, MapPin, Clock, MessageSquare, Menu, X, Lock, Unlock, 
   Search, Trash2, Plus, Video, Image as ImageIcon, ShieldCheck, ExternalLink, UserCheck,
   Monitor, Terminal, Cpu, Laptop, Shield, Bell, Share2, Globe, Send, Edit2, Check,
-  Maximize, Minimize, LogIn, LogOut, UserCheck2, UserCircle
+  Maximize, Minimize, LogIn, LogOut, UserCheck2, UserCircle, ArrowRight
 } from 'lucide-react';
 import ComputerSection from './components/ComputerSection';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
 import { LoginRewardCelebration } from './components/LoginRewardCelebration';
-import { AcademyUser } from './types';
+import { AcademyUser, UserRole } from './types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -38,27 +38,122 @@ export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
   { id: '5', platform: 'tiktok', title: 'TikTok Learning Clips', url: 'https://tiktok.com', isActive: true }
 ];
 
+export const SocialPlatformIcon: React.FC<{ platform: string; className?: string; size?: number }> = ({ platform, className = 'w-4 h-4 shrink-0', size = 18 }) => {
+  const p = (platform || '').toLowerCase();
+  
+  if (p === 'whatsapp') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="#25D366" />
+        <path d="M16.5 13.9c-.2-.1-1.2-.6-1.4-.7-.2-.1-.3-.1-.4.1-.1.2-.5.7-.7.8-.1.1-.3.1-.5 0-.2-.1-.9-.3-1.8-1.1-.7-.6-1.1-1.3-1.3-1.5-.1-.2 0-.4.1-.5.1-.1.2-.2.3-.4.1-.1.1-.2.2-.3.1-.1 0-.3 0-.4-.1-.1-.4-1.1-.6-1.5-.2-.4-.4-.3-.5-.3h-.4c-.1 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.3c.1.2 1.6 2.4 3.8 3.4.5.2 1 .4 1.3.5.5.2 1 .2 1.4.1.5-.1 1.4-.6 1.6-1.2.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.4-.3z" fill="#FFFFFF" />
+        <path fillRule="evenodd" clipRule="evenodd" d="M12 4.5A7.5 7.5 0 0 0 5.5 15.6L4.5 19.5l4-1a7.5 7.5 0 1 0 3.5-14zm0 13.5a6 6 0 0 1-3.1-.8l-.2-.1-2.3.6.6-2.2-.1-.2A6 6 0 1 1 12 18z" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+  
+  if (p === 'facebook') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="#1877F2" />
+        <path d="M15.5 12h-2.5v7h-3v-7h-2v-2.5h2v-1.7c0-2.2 1.3-3.3 3.3-3.3 1 0 1.8.1 2 .1v2.4h-1.4c-1.1 0-1.4.5-1.4 1.3V9.5h2.8l-.8 2.5z" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+
+  if (p === 'youtube') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="5" width="20" height="14" rx="4.5" fill="#FF0000" />
+        <polygon points="10,8.5 16,12 10,15.5" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+
+  if (p === 'instagram') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <defs>
+          <radialGradient id="instaGrad" cx="30%" cy="107%" r="150%">
+            <stop offset="0%" stopColor="#fdf497" />
+            <stop offset="5%" stopColor="#fdf497" />
+            <stop offset="45%" stopColor="#fd5949" />
+            <stop offset="60%" stopColor="#d6249f" />
+            <stop offset="90%" stopColor="#285AEB" />
+          </radialGradient>
+        </defs>
+        <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#instaGrad)" />
+        <rect x="5.5" y="5.5" width="13" height="13" rx="3.5" stroke="#FFFFFF" strokeWidth="1.6" fill="none" />
+        <circle cx="12" cy="12" r="3.2" stroke="#FFFFFF" strokeWidth="1.6" fill="none" />
+        <circle cx="15.8" cy="8.2" r="0.9" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+
+  if (p === 'tiktok') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="2" width="20" height="20" rx="5" fill="#000000" />
+        <path d="M16.5 7.8c-.8-.2-1.5-.7-1.9-1.3v5.6c0 2.2-1.8 4-4 4s-4-1.8-4-4 1.8-4 4-4c.3 0 .6 0 .9.1v2c-.3-.1-.6-.1-.9-.1-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2V4h2.5c.3 1.5 1.5 2.7 3 3v2.2-.4z" fill="#25F4EE" />
+        <path d="M17 7.5c-.8-.2-1.5-.7-1.9-1.3v5.6c0 2.2-1.8 4-4 4s-4-1.8-4-4c0-1.5.8-2.7 2-3.4v2.1c-.6.4-1 1-1 1.8 0 1.1.9 2 2 2s2-.9 2-2V3.5h2.5c.3 1.5 1.5 2.7 3 3v2.2-.2z" fill="#FE2C55" />
+        <path d="M16.8 7.6c-.8-.2-1.5-.7-1.9-1.3v5.6c0 2.2-1.8 4-4 4s-4-1.8-4-4 1.8-4 4-4c.3 0 .6 0 .9.1v2c-.3-.1-.6-.1-.9-.1-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2V3.8h2.5c.3 1.5 1.5 2.7 3 3v2.2-.4z" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+
+  if (p === 'telegram') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="#229ED9" />
+        <path d="M16.8 7.5L5.8 11.7c-.8.3-.8.8-.1 1l2.8.9 6.5-4.1c.3-.2.6-.1.4.1l-5.3 4.8-.2 3.1c.3 0 .5-.1.6-.3l1.5-1.5 3.1 2.3c.6.3 1 .2 1.2-.5l2.1-9.9c.2-.8-.3-1.2-.9-.7z" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+
+  if (p === 'twitter' || p === 'x') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="2" width="20" height="20" rx="5" fill="#000000" />
+        <path d="M14.9 6.5h1.9l-4.1 4.7 4.8 6.3h-3.8l-3-3.9-3.4 3.9H5.4l4.4-5-4.6-6h3.9l2.7 3.6 3.1-3.6zm-.7 9.8h1l-6.6-8.7H7.5l6.7 8.7z" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+
+  if (p === 'linkedin') {
+    return (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="2" width="20" height="20" rx="4" fill="#0A66C2" />
+        <circle cx="7.2" cy="7.2" r="1.5" fill="#FFFFFF" />
+        <rect x="5.8" y="9.8" width="2.8" height="8.4" fill="#FFFFFF" />
+        <path d="M10.8 9.8h2.6v1.2c.4-.7 1.3-1.4 2.7-1.4 2.8 0 3.4 1.8 3.4 4.2v4.4h-2.8v-3.9c0-1-.1-2.2-1.4-2.2s-1.6 1-1.6 2.2v3.9h-2.9V9.8z" fill="#FFFFFF" />
+      </svg>
+    );
+  }
+
+  return <Globe className={className} size={size} />;
+};
+
 export const getSocialPlatformInfo = (platform: string) => {
   switch ((platform || '').toLowerCase()) {
     case 'whatsapp':
-      return { label: 'WhatsApp', color: 'bg-emerald-500 hover:bg-emerald-600', textColor: 'text-emerald-700', border: 'border-emerald-200', bgLight: 'bg-emerald-50', emoji: '💬', badgeBg: 'bg-emerald-500 text-white' };
+      return { label: 'WhatsApp', color: 'bg-emerald-500 hover:bg-emerald-600', textColor: 'text-emerald-600', border: 'border-emerald-200', bgLight: 'bg-emerald-50', brandHex: '#25D366', badgeBg: 'bg-emerald-500 text-white' };
     case 'facebook':
-      return { label: 'Facebook', color: 'bg-blue-600 hover:bg-blue-700', textColor: 'text-blue-700', border: 'border-blue-200', bgLight: 'bg-blue-50', emoji: '📘', badgeBg: 'bg-blue-600 text-white' };
+      return { label: 'Facebook', color: 'bg-blue-600 hover:bg-blue-700', textColor: 'text-blue-600', border: 'border-blue-200', bgLight: 'bg-blue-50', brandHex: '#1877F2', badgeBg: 'bg-blue-600 text-white' };
     case 'youtube':
-      return { label: 'YouTube', color: 'bg-red-600 hover:bg-red-700', textColor: 'text-red-700', border: 'border-red-200', bgLight: 'bg-red-50', emoji: '▶️', badgeBg: 'bg-red-600 text-white' };
+      return { label: 'YouTube', color: 'bg-red-600 hover:bg-red-700', textColor: 'text-red-600', border: 'border-red-200', bgLight: 'bg-red-50', brandHex: '#FF0000', badgeBg: 'bg-red-600 text-white' };
     case 'instagram':
-      return { label: 'Instagram', color: 'bg-pink-600 hover:bg-pink-700', textColor: 'text-pink-700', border: 'border-pink-200', bgLight: 'bg-pink-50', emoji: '📸', badgeBg: 'bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white' };
+      return { label: 'Instagram', color: 'bg-pink-600 hover:bg-pink-700', textColor: 'text-pink-600', border: 'border-pink-200', bgLight: 'bg-pink-50', brandHex: '#E1306C', badgeBg: 'bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white' };
     case 'tiktok':
-      return { label: 'TikTok', color: 'bg-slate-900 hover:bg-black', textColor: 'text-slate-900', border: 'border-slate-300', bgLight: 'bg-slate-100', emoji: '🎵', badgeBg: 'bg-slate-950 text-white' };
+      return { label: 'TikTok', color: 'bg-slate-900 hover:bg-black', textColor: 'text-slate-900', border: 'border-slate-300', bgLight: 'bg-slate-100', brandHex: '#000000', badgeBg: 'bg-slate-950 text-white' };
     case 'twitter':
-      return { label: 'Twitter / X', color: 'bg-slate-900 hover:bg-black', textColor: 'text-slate-900', border: 'border-slate-300', bgLight: 'bg-slate-100', emoji: '✖️', badgeBg: 'bg-black text-white' };
+    case 'x':
+      return { label: 'Twitter / X', color: 'bg-slate-900 hover:bg-black', textColor: 'text-slate-900', border: 'border-slate-300', bgLight: 'bg-slate-100', brandHex: '#000000', badgeBg: 'bg-black text-white' };
     case 'telegram':
-      return { label: 'Telegram', color: 'bg-sky-500 hover:bg-sky-600', textColor: 'text-sky-700', border: 'border-sky-200', bgLight: 'bg-sky-50', emoji: '✈️', badgeBg: 'bg-sky-500 text-white' };
+      return { label: 'Telegram', color: 'bg-sky-500 hover:bg-sky-600', textColor: 'text-sky-600', border: 'border-sky-200', bgLight: 'bg-sky-50', brandHex: '#229ED9', badgeBg: 'bg-sky-500 text-white' };
     case 'linkedin':
-      return { label: 'LinkedIn', color: 'bg-blue-700 hover:bg-blue-800', textColor: 'text-blue-700', border: 'border-blue-200', bgLight: 'bg-blue-50', emoji: '💼', badgeBg: 'bg-blue-700 text-white' };
+      return { label: 'LinkedIn', color: 'bg-blue-700 hover:bg-blue-800', textColor: 'text-blue-700', border: 'border-blue-200', bgLight: 'bg-blue-50', brandHex: '#0A66C2', badgeBg: 'bg-blue-700 text-white' };
     case 'website':
     default:
-      return { label: 'Website / Portal', color: 'bg-indigo-600 hover:bg-indigo-700', textColor: 'text-indigo-700', border: 'border-indigo-200', bgLight: 'bg-indigo-50', emoji: '🌐', badgeBg: 'bg-indigo-600 text-white' };
+      return { label: 'Website / Portal', color: 'bg-indigo-600 hover:bg-indigo-700', textColor: 'text-indigo-600', border: 'border-indigo-200', bgLight: 'bg-indigo-50', brandHex: '#4F46E5', badgeBg: 'bg-indigo-600 text-white' };
   }
 };
 
@@ -118,8 +213,7 @@ export default function App() {
     const hash = window.location.hash.replace(/^#\/?/g, '');
     const validPages = ['login', 'home', 'ad', 'about', 'teachers', 'attendance', 'admission', 'online', 'computer', 'results', 'gallery', 'contact', 'records'];
     if (hash && validPages.includes(hash)) return hash;
-    const storedUser = localStorage.getItem('ta_current_user_v1');
-    return storedUser ? 'home' : 'login';
+    return 'home';
   });
 
   // Handle browser back/forward buttons (hashchange event)
@@ -130,8 +224,7 @@ export default function App() {
       if (hash && validPages.includes(hash)) {
         setCurrentPage(hash);
       } else if (!window.location.hash) {
-        const storedUser = localStorage.getItem('ta_current_user_v1');
-        setCurrentPage(storedUser ? 'home' : 'login');
+        setCurrentPage('home');
       }
     };
 
@@ -164,7 +257,20 @@ export default function App() {
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalInitialMode, setAuthModalInitialMode] = useState<'login' | 'signup'>('login');
+  const [authModalInitialRole, setAuthModalInitialRole] = useState<UserRole>('student');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const openTeacherLogin = () => {
+    setAuthModalInitialRole('teacher');
+    setAuthModalInitialMode('login');
+    setCurrentPage('login');
+  };
+
+  const openStudentLogin = () => {
+    setAuthModalInitialRole('student');
+    setAuthModalInitialMode('login');
+    setCurrentPage('login');
+  };
 
   // Flower Shower & 10 Coins Reward Celebration state
   const [celebrationState, setCelebrationState] = useState<{
@@ -1478,7 +1584,6 @@ export default function App() {
 
         {/* Desktop Menu */}
         <ul className="hidden xl:flex flex-row flex-nowrap items-center gap-1 list-none text-[13px] font-medium whitespace-nowrap">
-          <li><button onClick={() => setCurrentPage('login')} className={`px-2.5 py-1.5 rounded-lg transition whitespace-nowrap font-bold flex items-center gap-1.5 ${currentPage === 'login' ? 'bg-blue-600 text-white shadow-xs' : 'text-blue-700 bg-blue-50/80 hover:bg-blue-100'}`}><span>🔑</span> Login</button></li>
           <li><button onClick={() => setCurrentPage('home')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'home' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>Home</button></li>
           <li><button onClick={() => setCurrentPage('ad')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'ad' ? 'bg-amber-50 text-amber-700 font-bold' : 'text-amber-600 hover:bg-amber-50 font-medium'}`}>📢 Pro Ad</button></li>
           <li><button onClick={() => setCurrentPage('about')} className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${currentPage === 'about' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'}`}>About Us</button></li>
@@ -1628,10 +1733,10 @@ export default function App() {
                   href={link.url}
                   target="_blank"
                   rel="noreferrer"
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-xs transition hover:scale-110 ${info.color} text-white font-bold`}
+                  className="w-7 h-7 flex items-center justify-center transition hover:scale-115 shrink-0 rounded-full drop-shadow-xs"
                   title={`${link.title} (${info.label})`}
                 >
-                  <span>{info.emoji}</span>
+                  <SocialPlatformIcon platform={link.platform} size={24} className="w-6 h-6 shrink-0" />
                 </a>
               );
             })}
@@ -1933,7 +2038,7 @@ export default function App() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs px-3 py-1.5 rounded-full font-medium transition"
                     >
-                      <span>{info.emoji}</span>
+                      <SocialPlatformIcon platform={link.platform} size={14} className={`${info.textColor} shrink-0`} />
                       <span>{link.title}</span>
                     </a>
                   );
@@ -1964,12 +2069,14 @@ export default function App() {
             });
           }}
           initialMode={authModalInitialMode}
+          initialRole={authModalInitialRole}
         />
       )}
 
       {/* PAGE: HOME */}
       {currentPage === 'home' && (
         <div>
+          {/* HERO SECTION */}
           <div className="min-h-[85vh] text-white px-6 md:px-12 py-16 flex items-center relative overflow-hidden bg-slate-950">
             <div className="absolute inset-0 bg-cover bg-center opacity-85" style={{ backgroundImage: `url(${heroBg})` }}></div>
             <div className="absolute inset-0 bg-black/45 pointer-events-none"></div>
@@ -2008,23 +2115,41 @@ export default function App() {
               <p className="text-base md:text-lg text-slate-200 mb-8 max-w-2xl leading-relaxed">
                 Premium tuition academy with expert faculty and a proven success rate. Nurturing young minds for academic excellence and absolute confidence.
               </p>
-              <div className="flex flex-wrap gap-4 mb-8">
-                <button onClick={() => setCurrentPage('login')} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm border border-white/20">
-                  <Lock size={18} /> Student & Teacher Login
+              
+              {/* Action Buttons in Hero */}
+              <div className="flex flex-wrap gap-3.5 mb-8">
+                {/* Staff / Teacher Login Button */}
+                <button 
+                  onClick={openTeacherLogin} 
+                  className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-extrabold px-6 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm border border-indigo-400/30 ring-2 ring-indigo-400/20 cursor-pointer hover:scale-105"
+                  title="Official Faculty & Staff Login"
+                >
+                  <span className="text-base">👩‍🏫</span>
+                  <span>Staff / Teacher Login</span>
+                  <span className="bg-white/20 text-[10px] font-mono px-2 py-0.5 rounded-full">Portal</span>
                 </button>
-                <button onClick={() => setCurrentPage('teachers')} className="bg-white text-blue-900 font-semibold px-7 py-3 rounded-full shadow-lg hover:bg-blue-50 transition flex items-center gap-2 text-sm">
-                  <BookOpen size={18} /> Explore Courses
+
+                {/* Student Login Button */}
+                <button 
+                  onClick={openStudentLogin} 
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold px-6 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm border border-white/20 cursor-pointer"
+                >
+                  <Lock size={16} /> Student Login
                 </button>
-                <button onClick={() => setCurrentPage('admission')} className="bg-sky-400 text-white font-semibold px-7 py-3 rounded-full shadow-lg hover:bg-sky-500 transition flex items-center gap-2 text-sm">
-                  <GraduationCap size={18} /> Admission Open
+
+                <button onClick={() => setCurrentPage('teachers')} className="bg-white text-blue-900 font-semibold px-6 py-3 rounded-full shadow-lg hover:bg-blue-50 transition flex items-center gap-2 text-sm cursor-pointer">
+                  <BookOpen size={16} /> Explore Courses
+                </button>
+                <button onClick={() => setCurrentPage('admission')} className="bg-sky-400 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:bg-sky-500 transition flex items-center gap-2 text-sm cursor-pointer">
+                  <GraduationCap size={16} /> Admission Open
                 </button>
                 {isAdmin ? (
                   <>
                     <button 
                       onClick={() => setCurrentPage('records')} 
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
                     >
-                      <Unlock size={18} /> Admin Dashboard
+                      <Unlock size={16} /> Admin Dashboard
                     </button>
                     <button 
                       onClick={() => {
@@ -2033,64 +2158,43 @@ export default function App() {
                         alert('Admin logged out successfully');
                         setCurrentPage('home');
                       }} 
-                      className="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
+                      className="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-6 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
                     >
-                      <Lock size={18} /> Logout Admin
+                      <Lock size={16} /> Logout Admin
                     </button>
                   </>
                 ) : (
                   <button 
                     onClick={toggleAdmin} 
-                    className="bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 font-semibold px-7 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
+                    className="bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 font-semibold px-6 py-3 rounded-full shadow-lg transition flex items-center gap-2 text-sm cursor-pointer"
                   >
-                    <Lock size={18} /> Admin Mode
+                    <Lock size={16} /> Admin Mode
                   </button>
                 )}
               </div>
 
               {/* Active Social Media Channels Row in Hero */}
               {socialLinks.filter(l => l.isActive).length > 0 && (
-                <div className="mb-12 flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1 mr-1">
-                    <Share2 size={13} className="text-sky-400" /> Connect with Us:
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 mr-1">
+                    <Share2 size={14} className="text-sky-400" /> Connect with Us:
                   </span>
                   {socialLinks.filter(l => l.isActive).map(link => {
-                    const info = getSocialPlatformInfo(link.platform);
                     return (
                       <a
                         key={link.id}
                         href={link.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full transition hover:scale-105"
+                        className="inline-flex items-center gap-2 bg-slate-900/70 hover:bg-slate-900/95 border border-slate-700/80 text-white text-xs font-medium px-3.5 py-1.5 rounded-full transition hover:scale-105 shadow-sm backdrop-blur-md"
                       >
-                        <span>{info.emoji}</span>
+                        <SocialPlatformIcon platform={link.platform} size={18} className="shrink-0" />
                         <span>{link.title}</span>
                       </a>
                     );
                   })}
                 </div>
               )}
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white text-slate-900 p-4 rounded-2xl shadow-xl flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl text-blue-600">🎓</div>
-                  <div><b className="text-2xl text-blue-900 block font-bold">{attendanceStudents.length}+</b><span className="text-xs text-slate-500 font-medium">Students</span></div>
-                </div>
-                <div className="bg-white text-slate-900 p-4 rounded-2xl shadow-xl flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl text-blue-600">👩‍🏫</div>
-                  <div><b className="text-2xl text-blue-900 block font-bold">{teachers.length}+</b><span className="text-xs text-slate-500 font-medium">Expert Teachers</span></div>
-                </div>
-                <div className="bg-white text-slate-900 p-4 rounded-2xl shadow-xl flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl text-blue-600">🏆</div>
-                  <div><b className="text-2xl text-blue-900 block font-bold">10+</b><span className="text-xs text-slate-500 font-medium">Years Experience</span></div>
-                </div>
-                <div className="bg-white text-slate-900 p-4 rounded-2xl shadow-xl flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl text-blue-600">📈</div>
-                  <div><b className="text-2xl text-blue-900 block font-bold">100%</b><span className="text-xs text-slate-500 font-medium">Success Rate</span></div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -3405,7 +3509,7 @@ export default function App() {
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl ${info.bgLight} ${info.textColor} border ${info.border}`}>
-                            {info.emoji}
+                            <SocialPlatformIcon platform={link.platform} size={22} className="shrink-0" />
                           </div>
                           <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${info.badgeBg}`}>
                             {info.label}
@@ -4149,12 +4253,12 @@ export default function App() {
                     <div className="flex items-center gap-1 flex-wrap">
                       <span className="text-[10px] font-bold text-slate-400 mr-1">Quick Select:</span>
                       {[
-                        { plat: 'whatsapp', name: 'WhatsApp', icon: '💬', title: 'Official WhatsApp Support', defaultUrl: 'https://wa.me/923290275117' },
-                        { plat: 'facebook', name: 'Facebook', icon: '📘', title: 'MBA Academy Facebook Page', defaultUrl: 'https://www.facebook.com/profile.php?id=61592718998531' },
-                        { plat: 'youtube', name: 'YouTube', icon: '▶️', title: 'MBA Academy YouTube Channel', defaultUrl: 'https://www.youtube.com/@MBAAcademy-s8z' },
-                        { plat: 'instagram', name: 'Instagram', icon: '📸', title: 'MBA Academy Instagram', defaultUrl: 'https://www.instagram.com/mbaacadmey/' },
-                        { plat: 'tiktok', name: 'TikTok', icon: '🎵', title: 'TikTok Official', defaultUrl: 'https://tiktok.com/' },
-                        { plat: 'telegram', name: 'Telegram', icon: '✈️', title: 'Telegram Study Group', defaultUrl: 'https://t.me/' }
+                        { plat: 'whatsapp', name: 'WhatsApp', title: 'Official WhatsApp Support', defaultUrl: 'https://wa.me/923290275117' },
+                        { plat: 'facebook', name: 'Facebook', title: 'MBA Academy Facebook Page', defaultUrl: 'https://www.facebook.com/profile.php?id=61592718998531' },
+                        { plat: 'youtube', name: 'YouTube', title: 'MBA Academy YouTube Channel', defaultUrl: 'https://www.youtube.com/@MBAAcademy-s8z' },
+                        { plat: 'instagram', name: 'Instagram', title: 'MBA Academy Instagram', defaultUrl: 'https://www.instagram.com/mbaacadmey/' },
+                        { plat: 'tiktok', name: 'TikTok', title: 'TikTok Official', defaultUrl: 'https://tiktok.com/' },
+                        { plat: 'telegram', name: 'Telegram', title: 'Telegram Study Group', defaultUrl: 'https://t.me/' }
                       ].map(p => (
                         <button
                           key={p.plat}
@@ -4164,9 +4268,10 @@ export default function App() {
                             if (!newSocialTitle) setNewSocialTitle(p.title);
                             if (!newSocialUrl) setNewSocialUrl(p.defaultUrl);
                           }}
-                          className="px-2 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 text-[10px] font-bold rounded-lg transition cursor-pointer"
+                          className="px-2 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 text-[10px] font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
                         >
-                          {p.icon} {p.name}
+                          <SocialPlatformIcon platform={p.plat} size={12} className="shrink-0" />
+                          <span>{p.name}</span>
                         </button>
                       ))}
                     </div>
@@ -4275,8 +4380,8 @@ export default function App() {
                             className={`bg-white rounded-2xl p-4 border transition duration-200 shadow-2xs flex items-center justify-between gap-3 ${link.isActive ? 'border-slate-200' : 'border-slate-200 bg-slate-50/60 opacity-60'}`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${info.bgLight} ${info.textColor} border ${info.border}`}>
-                                {info.emoji}
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${info.bgLight} ${info.textColor} border ${info.border}`}>
+                                <SocialPlatformIcon platform={link.platform} size={20} className="shrink-0" />
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
@@ -4440,7 +4545,7 @@ export default function App() {
             <p className="text-xs text-slate-400 leading-relaxed mb-4">
               Class 1 to 10 - Quality Education & Professional Coaching. Admissions Open.
             </p>
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               {socialLinks.filter(l => l.isActive).map(link => {
                 const info = getSocialPlatformInfo(link.platform);
                 return (
@@ -4449,10 +4554,10 @@ export default function App() {
                     href={link.url}
                     target="_blank"
                     rel="noreferrer"
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-xs transition hover:scale-110 ${info.color} text-white font-bold`}
+                    className="w-8 h-8 flex items-center justify-center transition hover:scale-115 shrink-0 rounded-full shadow-xs"
                     title={`${link.title} (${info.label})`}
                   >
-                    <span>{info.emoji}</span>
+                    <SocialPlatformIcon platform={link.platform} size={28} className="w-7 h-7 shrink-0" />
                   </a>
                 );
               })}
@@ -4481,17 +4586,16 @@ export default function App() {
             
             <div className="space-y-1.5 pt-1">
               <span className="text-[11px] font-bold text-slate-400 block">Follow Us:</span>
-              {socialLinks.filter(l => l.isActive).slice(0, 3).map(link => {
-                const info = getSocialPlatformInfo(link.platform);
+              {socialLinks.filter(l => l.isActive).slice(0, 4).map(link => {
                 return (
                   <a
                     key={link.id}
                     href={link.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs flex items-center gap-1.5 text-slate-300 hover:text-white transition"
+                    className="text-xs flex items-center gap-2 text-slate-300 hover:text-white transition group py-0.5"
                   >
-                    <span>{info.emoji}</span>
+                    <SocialPlatformIcon platform={link.platform} size={16} className="shrink-0 group-hover:scale-110 transition" />
                     <span className="truncate">{link.title}</span>
                   </a>
                 );
@@ -4520,7 +4624,7 @@ export default function App() {
         className="fixed bottom-6 right-6 z-50 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center gap-2 transition hover:scale-110 border-2 border-white"
         title="Chat on WhatsApp: 03290275117"
       >
-        <span className="text-2xl">💬</span>
+        <SocialPlatformIcon platform="whatsapp" size={22} className="w-5 h-5" />
         <span className="hidden md:inline text-xs font-bold pr-1">WhatsApp 03290275117</span>
       </a>
 
@@ -4530,6 +4634,7 @@ export default function App() {
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleUserLoginSuccess}
         initialMode={authModalInitialMode}
+        initialRole={authModalInitialRole}
         adminPassword={adminPassword}
         teachersList={teachers}
         onTeacherAdded={(newT) => {

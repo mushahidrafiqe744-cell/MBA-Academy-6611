@@ -14,6 +14,7 @@ interface LoginPageProps {
   teachersList?: any[];
   onTeacherAdded?: (newTeacher: any) => void;
   initialMode?: 'login' | 'signup';
+  initialRole?: UserRole;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
@@ -22,10 +23,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   adminPassword = 'MushahidKing',
   teachersList = [],
   onTeacherAdded,
-  initialMode = 'login'
+  initialMode = 'login',
+  initialRole = 'student'
 }) => {
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
-  const [role, setRole] = useState<UserRole>('student');
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -125,7 +127,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         return;
       }
 
-      // 2. Try Supabase Auth SignIn
+      // 2. Strict Teacher Authorization Check
+      // Only mushahidrafiqe744@gmail.com with password King661 is authorized for Teacher login!
+      if (role === 'teacher') {
+        if (cleanEmail !== 'mushahidrafiqe744@gmail.com' || cleanPass !== 'King661') {
+          setError('Teacher Access Restricted: Only authorized email "mushahidrafiqe744@gmail.com" with password "King661" can login as Teacher. (صرف مجاز استاد ہی لاگ ان کر سکتے ہیں)');
+          setLoading(false);
+          return;
+        }
+
+        const teacherUser: AcademyUser = {
+          id: 'teacher-mushahid-master',
+          name: 'Sir Mushahid Rafique',
+          email: 'mushahidrafiqe744@gmail.com',
+          role: 'teacher',
+          phone: '03290275117',
+          subject: 'Mathematics, Science & Computer',
+          qualification: 'M.Sc / Senior Academic Head',
+          section: 'Senior Section',
+          avatar: '/logo.jpg',
+          createdAt: new Date().toISOString()
+        };
+        saveStoredUser({ ...teacherUser, passwordHash: 'King661' });
+        setSuccessMsg('Teacher login verified! Welcome Sir Mushahid Rafique.');
+        setTimeout(() => {
+          onSuccess(teacherUser);
+        }, 500);
+        return;
+      }
+
+      // 3. Try Supabase Auth SignIn for Student
       let supabaseUser: any = null;
       try {
         const { data, error: sbError } = await supabase.auth.signInWithPassword({
@@ -249,6 +280,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       return;
     }
 
+    // Strict Teacher Sign Up Authorization Check
+    // Only mushahidrafiqe744@gmail.com with password King661 is authorized to register as Teacher
+    if (role === 'teacher') {
+      if (cleanEmail !== 'mushahidrafiqe744@gmail.com' || cleanPass !== 'King661') {
+        setError('Teacher Sign Up Restricted: Only authorized email "mushahidrafiqe744@gmail.com" with password "King661" can create a Teacher account. (صرف مجاز استاد ہی سائن اپ کر سکتے ہیں)');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       let createdTeacherId: string | number | undefined;
 
@@ -258,12 +299,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           ? `${qualification} [Section: ${teacherSection}]` 
           : qualification;
 
-        const defaultTeacherImg = teacherPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80';
+        const defaultTeacherImg = teacherPhoto || '/logo.jpg';
 
         const dbTeacherPayload = {
-          name: cleanName,
-          subject: subject || 'General Teacher',
-          qual: fullQual || 'Certified Teacher',
+          name: cleanName || 'Sir Mushahid Rafique',
+          subject: subject || 'Mathematics, Science & Computer',
+          qual: fullQual || 'M.Sc / Senior Academic Head',
           img: defaultTeacherImg,
           created_at: new Date().toISOString()
         };
@@ -386,12 +427,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       setEmail('admin@mba.edu');
       setPassword('MushahidKing');
     } else if (demoRole === 'teacher') {
-      setEmail('teacher@mba.edu');
-      setPassword('teacher123');
-      setName('Prof. Tariq Mahmood');
+      setEmail('mushahidrafiqe744@gmail.com');
+      setPassword('King661');
+      setName('Sir Mushahid Rafique');
       setRole('teacher');
-      setSubject('Physics & Chemistry');
-      setQualification('M.Phil / Senior Faculty');
+      setSubject('Mathematics, Science & Computer');
+      setQualification('M.Sc / Senior Faculty & Academic Head');
     } else {
       setEmail('student@mba.edu');
       setPassword('student123');
@@ -414,7 +455,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       <div className="relative z-10 max-w-lg w-full">
         {/* Navigation & Header Controls */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <button
             onClick={onNavigateHome}
             className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-bold transition shadow-md border border-white/20 cursor-pointer"
@@ -772,40 +813,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 )}
               </button>
             </form>
-
-            {/* Quick Demo Credentials Footer */}
-            <div className="mt-5 pt-4 border-t border-slate-100">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2 text-center">
-                ⚡ Quick 1-Click Demo Login:
-              </span>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => fillDemo('admin')}
-                  className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-700 transition cursor-pointer"
-                  title="Principal / Admin"
-                >
-                  🛡️ Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillDemo('teacher')}
-                  className="p-1.5 bg-indigo-50/70 hover:bg-indigo-100 border border-indigo-100 rounded-xl text-[10px] font-bold text-indigo-700 transition cursor-pointer"
-                  title="Teacher Faculty"
-                >
-                  🏫 Teacher
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillDemo('student')}
-                  className="p-1.5 bg-blue-50/70 hover:bg-blue-100 border border-blue-100 rounded-xl text-[10px] font-bold text-blue-700 transition cursor-pointer"
-                  title="Student Portal"
-                >
-                  🎓 Student
-                </button>
-              </div>
-            </div>
-
           </div>
         </div>
 
