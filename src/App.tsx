@@ -1754,25 +1754,16 @@ export default function App() {
           {/* User Auth Login / Sign Up or Profile Button */}
           {currentUser ? (
             <div className="flex items-center gap-2">
-              {/* User Golden Coins Badge */}
-              <button
-                onClick={() => {
-                  setCelebrationState({
-                    isOpen: true,
-                    userName: currentUser.name,
-                    userRole: currentUser.role,
-                    coinsAwarded: 10,
-                    totalCoins: currentUser.coins ?? 10,
-                  });
-                }}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400/20 via-yellow-400/30 to-amber-500/20 hover:from-amber-400/30 hover:to-yellow-400/40 border border-amber-300/80 px-2.5 py-1.5 rounded-full text-xs font-black text-amber-950 shadow-2xs hover:scale-105 transition cursor-pointer"
-                title="Your MBA Coins Reward (Click for Flower Shower!)"
+              {/* User Golden Coins Badge - Clean static badge with no hover scale/gradient shifts */}
+              <div
+                className="flex items-center gap-1.5 bg-amber-100/70 border border-amber-300/80 px-2.5 py-1.5 rounded-full text-xs font-black text-amber-950 shadow-2xs select-none"
+                title="MBA Coins Reward"
               >
                 <span className="text-sm">🪙</span>
                 <span className="font-mono font-black">{currentUser.coins ?? 10}</span>
                 <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-amber-800 font-extrabold">Coins</span>
                 <span className="text-xs">🌸</span>
-              </button>
+              </div>
 
               <div className="relative">
                 <button
